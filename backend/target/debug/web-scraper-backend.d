@@ -1,0 +1,1 @@
+C:\Users\hagga\Documents\GitHub\web-scrapper\backend\target\debug\web-scraper-backend.exe: C:\Users\hagga\Documents\GitHub\web-scrapper\backend\src\main.rs C:\Users\hagga\Documents\GitHub\web-scrapper\backend\src\scraper.rs
