@@ -34,6 +34,19 @@ struct ScrapedData {
     screenshot: Option<String>, // Base64 encoded screenshot
     word_count: usize,
     response_time_ms: u64,
+    text_content: String,
+    word_frequency: HashMap<String, usize>,
+    reading_time_minutes: f64,
+    readability_score: f64,
+    language: String,
+    social_media_links: Vec<LinkInfo>,
+    page_size_kb: f64,
+    // New fields for advanced analysis
+    rendered_html: Option<String>,
+    network_resources: Vec<NetworkResource>,
+    response_headers: HashMap<String, String>,
+    console_logs: Vec<ConsoleLog>,
+    security_report: SecurityReport,
 }
 
 #[derive(Serialize)]
@@ -49,6 +62,32 @@ struct ImageInfo {
     src: String,
     width: Option<String>,
     height: Option<String>,
+}
+
+#[derive(Serialize)]
+struct NetworkResource {
+    name: String,
+    initiator_type: String,
+    start_time_ms: f64,
+    duration_ms: f64,
+    transfer_size: Option<u64>,
+    encoded_body_size: Option<u64>,
+}
+
+#[derive(Serialize)]
+struct ConsoleLog {
+    level: String,
+    args: Vec<String>,
+}
+
+#[derive(Serialize)]
+struct SecurityReport {
+    is_https: bool,
+    mixed_content: bool,
+    missing_security_headers: Vec<String>,
+    insecure_cookies: Vec<String>,
+    csp: Option<String>,
+    notes: Vec<String>,
 }
 
 async fn health_check() -> Json<serde_json::Value> {
