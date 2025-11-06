@@ -8,44 +8,12 @@ import ApiKeysPage from '../components/ApiKeysPage';
 import UsageAnalytics from '../components/UsageAnalytics';
 import SettingsPage from '../components/SettingsPage';
 import WebScraperPage from '../components/WebScraperPage';
-
-// Modern Color Palette
-const colors = {
-  // Primary colors
-  primary: '#6366F1',        // Indigo
-  primaryDark: '#4F46E5',    // Dark Indigo
-  primaryLight: '#A5B4FC',   // Light Indigo
-  
-  // Backgrounds
-  background: '#FFFFFF',      // Pure white
-  backgroundSecondary: '#F8FAFC', // Light gray
-  backgroundTertiary: '#F1F5F9',  // Lighter gray
-  
-  // Text colors
-  textPrimary: '#0F172A',    // Dark slate
-  textSecondary: '#475569',  // Medium slate
-  textMuted: '#94A3B8',      // Light slate
-  
-  // Accent colors
-  success: '#10B981',        // Emerald
-  warning: '#F59E0B',        // Amber
-  error: '#EF4444',          // Red
-  info: '#3B82F6',           // Blue
-  
-  // Border and dividers
-  border: '#E2E8F0',         // Light border
-  borderLight: '#F1F5F9',    // Very light border
-  
-  // Shadows and overlays
-  shadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-  shadowMd: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-  shadowLg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-};
+import colors from '../theme/colors';
 
 const DashboardContainer = styled.div`
   display: flex;
   min-height: 100vh;
-  background: ${colors.background};
+  background: ${colors.cream};
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 `;
 
@@ -81,6 +49,25 @@ const ContentArea = styled.main`
   }
 `;
 
+const PlaceholderPage = styled.div`
+  background: ${colors.white};
+  border-radius: 15px;
+  padding: 3rem;
+  box-shadow: 0 4px 15px ${colors.shadow};
+  text-align: center;
+  
+  h2 {
+    color: ${colors.brown};
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  p {
+    color: ${colors.textSecondary};
+    font-size: 1.1rem;
+  }
+`;
+
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState('home');
@@ -92,10 +79,38 @@ const Dashboard: React.FC = () => {
         return <DashboardHome />;
       case 'scraper':
         return <WebScraperPage />;
+      case 'history':
+        return (
+          <PlaceholderPage>
+            <h2>📋 Scraping History</h2>
+            <p>View your complete scraping history with detailed results and analytics.</p>
+          </PlaceholderPage>
+        );
       case 'api-keys':
         return <ApiKeysPage />;
       case 'analytics':
         return <UsageAnalytics />;
+      case 'network':
+        return (
+          <PlaceholderPage>
+            <h2>🌐 Network Analysis</h2>
+            <p>Analyze network requests, performance metrics, and resource loading for scraped websites.</p>
+          </PlaceholderPage>
+        );
+      case 'security':
+        return (
+          <PlaceholderPage>
+            <h2>🔒 Security Reports</h2>
+            <p>Comprehensive security analysis including HTTPS status, headers, vulnerabilities, and recommendations.</p>
+          </PlaceholderPage>
+        );
+      case 'documentation':
+        return (
+          <PlaceholderPage>
+            <h2>📚 API Documentation</h2>
+            <p>Complete API reference with examples and integration guides.</p>
+          </PlaceholderPage>
+        );
       case 'settings':
         return <SettingsPage />;
       default:
@@ -114,6 +129,7 @@ const Dashboard: React.FC = () => {
         setCurrentPage={setCurrentPage}
         isOpen={sidebarOpen}
         setIsOpen={setSidebarOpen}
+        user={user}
       />
       <MainContent sidebarOpen={sidebarOpen}>
         <Navbar 

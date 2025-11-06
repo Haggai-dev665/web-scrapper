@@ -16,6 +16,15 @@ export const colors = {
   white: '#FFFFFF',
   black: '#1A1A1A',
   
+  // Backward compatibility aliases
+  accent: '#29E7CD',       // Maps to turquoise
+  lightBlue: '#7FEFDB',    // Maps to lightTurquoise
+  gray: '#A89892',         // Maps to textMuted
+  charcoal: '#6A3E37',     // Maps to brown
+  raisinBlack: '#4A2B26',  // Maps to darkBrown
+  mutedBlue: '#8B6B66',    // Maps to textSecondary
+  darkGray: '#2A2A2A',     // Dark gray for backgrounds
+  
   // Status colors (adjusted to fit palette)
   success: '#29E7CD',
   warning: '#F4A261',
