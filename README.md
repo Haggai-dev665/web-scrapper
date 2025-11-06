@@ -1,18 +1,34 @@
-# 🔍 Advanced Web Scraper
+# 🔍 WebScraper.live - Advanced Web Intelligence Platform
 
-A powerful, full-stack web scraping application built with **Rust** for the backend and **React TypeScript** for the frontend. Extract and analyze website data with beautiful visualizations and comprehensive insights.
+A powerful, full-stack web scraping application built with **Rust** for the backend and **React TypeScript** for the frontend. Extract, analyze, and secure insights from any website with military-grade precision and comprehensive security analysis.
 
 ![Web Scraper Interface](https://github.com/user-attachments/assets/fb07f572-46bb-450b-b56a-257428285711)
 
 ## ✨ Features
 
+### Core Capabilities
 - **🚀 High-Performance Backend**: Built with Rust using Axum framework for blazing-fast performance
-- **🎨 Beautiful UI**: Modern React interface with white and raisin black color scheme
+- **🎨 Beautiful UI**: Modern React interface with harmonious color palette (cream, turquoise, brown)
 - **📊 Comprehensive Analysis**: Extract titles, descriptions, headings, links, images, and metadata
 - **⚡ Real-time Processing**: Live feedback with loading states and error handling
-- **🔗 API Access**: RESTful API for programmatic access
+- **🔗 API Access**: RESTful API with comprehensive documentation for programmatic access
 - **📱 Responsive Design**: Works seamlessly on desktop and mobile devices
 - **🛡️ Error Handling**: Robust error handling with user-friendly messages
+
+### Advanced Features
+- **🖼️ Screenshot Capture**: Automatic high-quality screenshots of every scraped page
+- **🔒 Security Analysis**: Comprehensive security reports including:
+  - HTTPS status and mixed content detection
+  - Missing security headers identification
+  - Cookie security validation
+  - Content Security Policy (CSP) analysis
+  - Common vulnerability detection
+- **🌐 Network Analysis**: Detailed network resource tracking and performance metrics
+- **📝 Console Logs**: Capture JavaScript console messages for debugging
+- **🔐 OAuth Integration**: Google and GitHub authentication (coming soon)
+- **📊 Usage Analytics**: Track API usage, response times, and success rates
+- **🔑 API Key Management**: Generate and manage multiple API keys
+- **📚 Comprehensive Documentation**: Built-in API documentation with examples
 
 ## 🏗️ Architecture
 
@@ -37,15 +53,22 @@ A powerful, full-stack web scraping application built with **Rust** for the back
 - **Axum**: Modern web framework
 - **Reqwest**: HTTP client for web requests
 - **Scraper**: HTML parsing and CSS selection
+- **Headless Chrome**: Browser automation for JavaScript rendering
 - **Tokio**: Async runtime
 - **Serde**: JSON serialization/deserialization
 - **Tower-HTTP**: CORS middleware
+- **MongoDB**: Database for user data and API keys
+- **JWT**: Secure authentication
+- **Bcrypt**: Password hashing
 
 ### Frontend (React)
 - **React 18**: Latest React with hooks
 - **TypeScript**: Type-safe development
-- **Styled-components**: CSS-in-JS styling
+- **Styled-components**: CSS-in-JS styling with theme support
 - **Axios**: HTTP client for API calls
+- **React Router**: Client-side routing
+- **React Icons**: Beautiful icon library
+- **Vite**: Lightning-fast build tool
 
 ## 🚀 Quick Start
 
@@ -248,6 +271,83 @@ npm run build
 # Serve the build folder with any static file server
 ```
 
+## 🔑 Using API Keys in Your Projects
+
+WebScraper.live provides a powerful API that you can use in your own applications. Here's how:
+
+### 1. Generate Your API Key
+
+1. Sign up at [webscrapper.live](https://webscrapper.live)
+2. Navigate to your Dashboard
+3. Go to "API Keys" section
+4. Click "Create New API Key"
+5. Copy and securely store your API key
+
+### 2. Make API Calls
+
+#### JavaScript/Node.js Example
+```javascript
+const axios = require('axios');
+
+async function scrapeWebsite(url) {
+  try {
+    const response = await axios.post(
+      'https://api.webscrapper.live/api/scrape',
+      { url },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': 'your_api_key_here'
+        }
+      }
+    );
+    
+    const data = response.data.data;
+    console.log('Title:', data.title);
+    console.log('Screenshot:', data.screenshot); // Base64 encoded
+    console.log('Security Report:', data.security_report);
+    
+    return data;
+  } catch (error) {
+    console.error('Error:', error.message);
+  }
+}
+
+scrapeWebsite('https://example.com');
+```
+
+#### Python Example
+```python
+import requests
+
+def scrape_website(url):
+    headers = {
+        'Content-Type': 'application/json',
+        'X-API-Key': 'your_api_key_here'
+    }
+    response = requests.post(
+        'https://api.webscrapper.live/api/scrape',
+        json={'url': url},
+        headers=headers
+    )
+    
+    if response.status_code == 200:
+        result = response.json()['data']
+        print(f"Title: {result['title']}")
+        print(f"Security: {result['security_report']}")
+        return result
+
+scrape_website('https://example.com')
+```
+
+### 3. API Documentation
+
+Full API documentation available at [/api-docs](/api-docs)
+
+## 🚀 Deployment to Heroku
+
+Designed for deployment on Heroku at **webscrapper.live**. See [DEPLOYMENT.md](DEPLOYMENT.md) for details.
+
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -260,14 +360,24 @@ npm run build
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🎯 Future Enhancements
+## 🎯 Implemented Features
 
-- [ ] Screenshot capture functionality
+- [x] Screenshot capture functionality
+- [x] Network security analysis with detailed reports
+- [x] Headless Chrome rendering for JavaScript-heavy sites
+- [x] API key authentication and management
+- [x] OAuth integration UI (Google & GitHub)
+- [x] Comprehensive API documentation page
+- [x] User dashboard with real data
+- [x] Usage analytics and monitoring
+- [x] Security vulnerability detection
+- [x] Network resource analysis
+- [x] Console log capture
+- [x] Modern responsive UI with custom color theme
 - [ ] Batch URL processing
 - [ ] Data export (CSV, JSON)
-- [ ] Historical scraping data
+- [ ] Historical scraping data visualization
 - [ ] Advanced filtering options
-- [ ] Performance analytics
 - [ ] Rate limiting and caching
 - [ ] Docker containerization
 
