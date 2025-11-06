@@ -1,30 +1,19 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Link } from 'react-router-dom';
-
-// Color Palette
-const colors = {
-  raisinBlack: '#1A1423',
-  charcoal: '#36454F',
-  mutedBlue: '#5A6C7D',
-  accent: '#7B68EE',
-  lightBlue: '#87CEEB',
-  white: '#FFFFFF',
-  gray: '#B8B8B8',
-  darkGray: '#2A2A2A'
-};
+import colors from '../theme/colors';
 
 // Animations
 const glow = keyframes`
-  0% { text-shadow: 0 0 20px ${colors.accent}; }
-  50% { text-shadow: 0 0 30px ${colors.accent}, 0 0 40px ${colors.lightBlue}; }
-  100% { text-shadow: 0 0 20px ${colors.accent}; }
+  0% { text-shadow: 0 0 20px ${colors.turquoise}; }
+  50% { text-shadow: 0 0 30px ${colors.turquoise}, 0 0 40px ${colors.lightTurquoise}; }
+  100% { text-shadow: 0 0 20px ${colors.turquoise}; }
 `;
 
 const pulseGlow = keyframes`
-  0% { box-shadow: 0 0 20px ${colors.accent}40; }
-  50% { box-shadow: 0 0 40px ${colors.accent}60, 0 0 60px ${colors.lightBlue}40; }
-  100% { box-shadow: 0 0 20px ${colors.accent}40; }
+  0% { box-shadow: 0 0 20px ${colors.turquoise}40; }
+  50% { box-shadow: 0 0 40px ${colors.turquoise}60, 0 0 60px ${colors.lightTurquoise}40; }
+  100% { box-shadow: 0 0 20px ${colors.turquoise}40; }
 `;
 
 const float = keyframes`
@@ -46,10 +35,10 @@ const fadeInUp = keyframes`
 
 const LandingContainer = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, ${colors.raisinBlack} 0%, ${colors.charcoal} 30%, ${colors.raisinBlack} 70%, ${colors.darkGray} 100%);
+  background: linear-gradient(135deg, ${colors.cream} 0%, ${colors.backgroundSecondary} 30%, ${colors.cream} 70%, ${colors.backgroundTertiary} 100%);
   position: relative;
   overflow: hidden;
-  color: ${colors.white};
+  color: ${colors.brown};
 
   &::before {
     content: '';
@@ -59,9 +48,9 @@ const LandingContainer = styled.div`
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 20% 80%, ${colors.mutedBlue}25 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, ${colors.accent}20 0%, transparent 50%),
-      radial-gradient(circle at 40% 40%, ${colors.lightBlue}15 0%, transparent 50%);
+      radial-gradient(circle at 20% 80%, ${colors.lightTurquoise}25 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, ${colors.turquoise}20 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, ${colors.lightGreen}15 0%, transparent 50%);
     pointer-events: none;
     animation: ${float} 20s ease-in-out infinite;
   }
@@ -76,7 +65,7 @@ const LandingContainer = styled.div`
     background: linear-gradient(
       45deg,
       transparent 30%,
-      ${colors.accent}03 50%,
+      ${colors.turquoise}03 50%,
       transparent 70%
     );
     pointer-events: none;
@@ -133,12 +122,12 @@ const Header = styled.header`
 const Logo = styled.div`
   font-size: 1.8rem;
   font-weight: bold;
-  color: ${colors.white};
+  color: ${colors.brown};
   display: flex;
   align-items: center;
   gap: 0.5rem;
   animation: ${glow} 3s ease-in-out infinite;
-  text-shadow: 0 0 15px ${colors.accent};
+  text-shadow: 0 0 15px ${colors.turquoise};
   
   &:hover {
     animation-duration: 1s;
@@ -152,7 +141,7 @@ const Nav = styled.nav`
 `;
 
 const NavLink = styled(Link)`
-  color: ${colors.gray};
+  color: ${colors.textSecondary};
   text-decoration: none;
   font-weight: 500;
   transition: all 0.3s ease;
@@ -165,13 +154,13 @@ const NavLink = styled(Link)`
     left: 0;
     width: 0;
     height: 2px;
-    background: linear-gradient(90deg, ${colors.accent}, ${colors.lightBlue});
+    background: linear-gradient(90deg, ${colors.turquoise}, ${colors.lightTurquoise});
     transition: width 0.3s ease;
   }
   
   &:hover {
-    color: ${colors.white};
-    text-shadow: 0 0 15px ${colors.accent};
+    color: ${colors.brown};
+    text-shadow: 0 0 15px ${colors.turquoise};
     
     &::after {
       width: 100%;
@@ -186,26 +175,26 @@ const AuthButtons = styled.div`
 `;
 
 const LoginButton = styled(Link)`
-  color: ${colors.white};
+  color: ${colors.brown};
   text-decoration: none;
   padding: 0.75rem 1.5rem;
-  border: 2px solid ${colors.mutedBlue};
+  border: 2px solid ${colors.brown};
   border-radius: 30px;
   font-weight: 600;
   transition: all 0.3s ease;
-  background: rgba(90, 108, 125, 0.1);
+  background: ${colors.white};
   backdrop-filter: blur(10px);
   
   &:hover {
-    background: ${colors.mutedBlue}40;
-    border-color: ${colors.accent};
-    box-shadow: 0 0 20px ${colors.accent}40;
-    text-shadow: 0 0 10px ${colors.accent};
+    background: ${colors.backgroundTertiary};
+    border-color: ${colors.turquoise};
+    box-shadow: 0 0 20px ${colors.turquoise}40;
+    color: ${colors.turquoise};
   }
 `;
 
 const SignupButton = styled(Link)`
-  background: linear-gradient(45deg, ${colors.accent}, ${colors.lightBlue});
+  background: linear-gradient(45deg, ${colors.turquoise}, ${colors.lightTurquoise});
   color: ${colors.white};
   text-decoration: none;
   padding: 0.75rem 1.5rem;
@@ -213,11 +202,11 @@ const SignupButton = styled(Link)`
   font-weight: 600;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
-  border: 2px solid ${colors.accent}60;
+  border: 2px solid ${colors.turquoise}60;
   animation: ${pulseGlow} 4s ease-in-out infinite;
   
   &:hover {
-    background: linear-gradient(45deg, ${colors.lightBlue}, ${colors.accent});
+    background: linear-gradient(45deg, ${colors.lightTurquoise}, ${colors.turquoise});
     transform: translateY(-2px);
     animation-duration: 1s;
     text-shadow: 0 0 15px ${colors.white};
@@ -229,7 +218,7 @@ const HeroSection = styled.section`
   z-index: 10;
   text-align: center;
   padding: 6rem 2rem;
-  color: white;
+  color: ${colors.brown};
   max-width: 1200px;
   margin: 0 auto;
 `;
@@ -238,12 +227,12 @@ const HeroTitle = styled.h1`
   font-size: 4rem;
   font-weight: 700;
   margin-bottom: 1.5rem;
-  background: linear-gradient(45deg, ${colors.white}, ${colors.lightBlue}, ${colors.accent});
+  background: linear-gradient(45deg, ${colors.brown}, ${colors.turquoise}, ${colors.darkBrown});
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: ${glow} 4s ease-in-out infinite;
-  text-shadow: 0 0 30px ${colors.accent}60;
+  text-shadow: 0 0 30px ${colors.turquoise}60;
   line-height: 1.2;
   
   @media (max-width: 768px) {
@@ -254,12 +243,12 @@ const HeroTitle = styled.h1`
 const HeroSubtitle = styled.p`
   font-size: 1.4rem;
   margin-bottom: 3rem;
-  color: ${colors.gray};
+  color: ${colors.textSecondary};
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
   line-height: 1.7;
-  text-shadow: 0 0 10px ${colors.mutedBlue}40;
+  text-shadow: 0 0 10px ${colors.turquoise}20;
   animation: ${fadeInUp} 1s ease-out 0.5s both;
   
   @media (max-width: 768px) {
@@ -280,7 +269,7 @@ const CTAButtons = styled.div`
 `;
 
 const PrimaryButton = styled(Link)`
-  background: linear-gradient(45deg, ${colors.accent}, ${colors.lightBlue});
+  background: linear-gradient(45deg, ${colors.turquoise}, ${colors.lightTurquoise});
   color: ${colors.white};
   text-decoration: none;
   padding: 1.2rem 3rem;
@@ -288,24 +277,24 @@ const PrimaryButton = styled(Link)`
   font-weight: 700;
   font-size: 1.2rem;
   transition: all 0.3s ease;
-  border: 2px solid ${colors.accent}60;
+  border: 2px solid ${colors.turquoise}60;
   animation: ${pulseGlow} 3s ease-in-out infinite;
   text-shadow: 0 0 10px ${colors.white}60;
   
   &:hover {
     transform: translateY(-5px) scale(1.05);
-    background: linear-gradient(45deg, ${colors.lightBlue}, ${colors.accent});
+    background: linear-gradient(45deg, ${colors.lightTurquoise}, ${colors.turquoise});
     animation-duration: 0.5s;
     text-shadow: 0 0 20px ${colors.white};
   }
 `;
 
 const SecondaryButton = styled(Link)`
-  background: ${colors.charcoal}80;
-  color: ${colors.white};
+  background: ${colors.white};
+  color: ${colors.brown};
   text-decoration: none;
   padding: 1.2rem 3rem;
-  border: 2px solid ${colors.mutedBlue};
+  border: 2px solid ${colors.brown};
   border-radius: 50px;
   font-weight: 600;
   font-size: 1.2rem;
@@ -313,11 +302,11 @@ const SecondaryButton = styled(Link)`
   backdrop-filter: blur(15px);
   
   &:hover {
-    background: ${colors.mutedBlue}60;
-    border-color: ${colors.accent};
+    background: ${colors.backgroundTertiary};
+    border-color: ${colors.turquoise};
     transform: translateY(-5px);
-    box-shadow: 0 0 25px ${colors.accent}40;
-    text-shadow: 0 0 15px ${colors.accent};
+    box-shadow: 0 0 25px ${colors.turquoise}40;
+    color: ${colors.turquoise};
   }
 `;
 
@@ -496,13 +485,13 @@ const LandingPage: React.FC = () => {
       
       <Header>
         <Logo>
-          ⚡ WebIntel Pro
+          ⚡ WebScraper.live
         </Logo>
         <Nav>
           <NavLink to="#features">🚀 Features</NavLink>
           <NavLink to="#technology">🔧 Technology</NavLink>
           <NavLink to="#pricing">💎 Pricing</NavLink>
-          <NavLink to="#docs">📚 Docs</NavLink>
+          <NavLink to="/api-docs">📚 API Docs</NavLink>
         </Nav>
         <AuthButtons>
           <LoginButton to="/login">Login</LoginButton>
@@ -513,7 +502,7 @@ const LandingPage: React.FC = () => {
       <HeroSection>
         <HeroTitle>
           Next-Generation Web Intelligence<br />
-          <span style={{ fontSize: '0.8em', color: colors.lightBlue }}>Powered by Advanced AI</span>
+          <span style={{ fontSize: '0.8em', color: colors.turquoise }}>Powered by Advanced AI & Security</span>
         </HeroTitle>
         <HeroSubtitle>
           Unlock the full potential of web data with our enterprise-grade scraping platform. 

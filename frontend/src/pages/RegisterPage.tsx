@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import colors from '../theme/colors';
+import { FaGoogle, FaGithub } from 'react-icons/fa';
 
 const AuthContainer = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, ${colors.cream} 0%, ${colors.backgroundSecondary} 50%, ${colors.cream} 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,14 +15,14 @@ const AuthContainer = styled.div`
 `;
 
 const AuthCard = styled.div`
-  background: rgba(255, 255, 255, 0.95);
+  background: ${colors.white};
   backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 3rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 20px 60px ${colors.shadowLg};
+  border: 2px solid ${colors.turquoise}30;
   width: 100%;
-  max-width: 450px;
+  max-width: 500px;
 `;
 
 const Logo = styled.div`
@@ -30,14 +32,14 @@ const Logo = styled.div`
 
 const LogoText = styled.h1`
   font-size: 2rem;
-  color: #667eea;
+  color: ${colors.brown};
   margin: 0;
   font-weight: 700;
 `;
 
 const Title = styled.h2`
   text-align: center;
-  color: #1e1e1e;
+  color: ${colors.brown};
   margin-bottom: 0.5rem;
   font-size: 1.8rem;
   font-weight: 600;
@@ -45,7 +47,7 @@ const Title = styled.h2`
 
 const Subtitle = styled.p`
   text-align: center;
-  color: #6b7280;
+  color: ${colors.textSecondary};
   margin-bottom: 2rem;
   font-size: 0.95rem;
 `;
@@ -72,7 +74,7 @@ const InputGroup = styled.div`
 `;
 
 const Label = styled.label`
-  color: #4a5568;
+  color: ${colors.textSecondary};
   font-weight: 600;
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
@@ -80,7 +82,7 @@ const Label = styled.label`
 
 const Input = styled.input`
   padding: 0.875rem 1rem;
-  border: 2px solid #e2e8f0;
+  border: 2px solid ${colors.border};
   border-radius: 10px;
   font-size: 1rem;
   transition: all 0.3s ease;
@@ -88,17 +90,17 @@ const Input = styled.input`
   
   &:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: ${colors.turquoise};
+    box-shadow: 0 0 0 3px ${colors.turquoise}15;
   }
   
   &::placeholder {
-    color: #a0aec0;
+    color: ${colors.textMuted};
   }
 `;
 
 const Button = styled.button`
-  background: linear-gradient(45deg, #667eea, #764ba2);
+  background: linear-gradient(45deg, ${colors.turquoise}, ${colors.lightTurquoise});
   color: white;
   border: none;
   padding: 1rem;
@@ -111,7 +113,7 @@ const Button = styled.button`
   
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 10px 30px ${colors.turquoise}30;
   }
   
   &:disabled {
@@ -144,7 +146,7 @@ const LinkContainer = styled.div`
 `;
 
 const AuthLink = styled(Link)`
-  color: #667eea;
+  color: ${colors.turquoise};
   text-decoration: none;
   font-weight: 600;
   
@@ -157,26 +159,83 @@ const BackToHome = styled(Link)`
   position: absolute;
   top: 2rem;
   left: 2rem;
-  color: white;
+  color: ${colors.brown};
   text-decoration: none;
   font-weight: 600;
   padding: 0.5rem 1rem;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid ${colors.brown};
   border-radius: 20px;
   transition: all 0.3s ease;
+  background: ${colors.white};
   
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: white;
+    background: ${colors.backgroundTertiary};
+    border-color: ${colors.turquoise};
+    color: ${colors.turquoise};
   }
 `;
 
 const Terms = styled.div`
   font-size: 0.85rem;
-  color: #6b7280;
+  color: ${colors.textSecondary};
   text-align: center;
   margin-top: 1rem;
   line-height: 1.4;
+`;
+
+const OAuthSection = styled.div`
+  margin: 2rem 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const OAuthButton = styled.button<{ provider: 'google' | 'github' }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid ${props => props.provider === 'google' ? '#DB4437' : '#333'};
+  background: ${colors.white};
+  color: ${props => props.provider === 'google' ? '#DB4437' : '#333'};
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px ${props => props.provider === 'google' ? 'rgba(219, 68, 55, 0.2)' : 'rgba(0, 0, 0, 0.15)'};
+  }
+  
+  svg {
+    font-size: 1.25rem;
+  }
+`;
+
+const Divider = styled.div`
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+  color: ${colors.textMuted};
+  
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid ${colors.border};
+  }
+  
+  &::before {
+    margin-right: 1rem;
+  }
+  
+  &::after {
+    margin-left: 1rem;
+  }
 `;
 
 const RegisterPage: React.FC = () => {
@@ -231,17 +290,35 @@ const RegisterPage: React.FC = () => {
     }
   };
 
+  const handleOAuthRegister = (provider: 'google' | 'github') => {
+    // TODO: Implement OAuth registration
+    alert(`${provider} OAuth registration coming soon!`);
+  };
+
   return (
     <AuthContainer>
       <BackToHome to="/">← Back to Home</BackToHome>
       
       <AuthCard>
         <Logo>
-          <LogoText>🕷️ ScrapeMaster</LogoText>
+          <LogoText>⚡ WebScraper.live</LogoText>
         </Logo>
         
         <Title>Create Account</Title>
         <Subtitle>Start your free trial today. No credit card required.</Subtitle>
+        
+        <OAuthSection>
+          <OAuthButton provider="google" onClick={() => handleOAuthRegister('google')}>
+            <FaGoogle />
+            Sign up with Google
+          </OAuthButton>
+          <OAuthButton provider="github" onClick={() => handleOAuthRegister('github')}>
+            <FaGithub />
+            Sign up with GitHub
+          </OAuthButton>
+        </OAuthSection>
+
+        <Divider>or</Divider>
         
         {error && <ErrorMessage>{error}</ErrorMessage>}
         
