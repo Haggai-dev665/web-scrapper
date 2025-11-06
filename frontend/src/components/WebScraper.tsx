@@ -1,6 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import axios from 'axios';
+import { apiService } from '../services/api';
+import { useToast } from './Toast';
+
+// Modern Color Palette
+const colors = {
+  primary: '#6366F1',
+  primaryDark: '#4F46E5',
+  primaryLight: '#A5B4FC',
+  background: '#FFFFFF',
+  backgroundSecondary: '#F8FAFC',
+  backgroundTertiary: '#F1F5F9',
+  textPrimary: '#0F172A',
+  textSecondary: '#475569',
+  textMuted: '#94A3B8',
+  success: '#10B981',
+  warning: '#F59E0B',
+  error: '#EF4444',
+  info: '#3B82F6',
+  border: '#E2E8F0',
+  borderLight: '#F1F5F9',
+  shadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+  shadowMd: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+  shadowLg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+};
 
 // Types
 interface NetworkRequest {
@@ -82,19 +105,39 @@ interface ScrapeResponse {
 // Styled Components
 const ScraperContainer = styled.div`
   max-width: 100%;
-  margin: 0 auto;
+  padding: 0;
+  background: ${colors.backgroundSecondary};
+  min-height: calc(100vh - 140px);
+  color: ${colors.textPrimary};
+`;
+
+const PageHeader = styled.div`
+  margin-bottom: 2rem;
+  
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: ${colors.textPrimary};
+    margin: 0 0 0.5rem 0;
+    line-height: 1.2;
+  }
+  
+  p {
+    font-size: 1rem;
+    color: ${colors.textSecondary};
+    margin: 0;
+    line-height: 1.5;
+  }
 `;
 
 const InputSection = styled.div`
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
+  background: ${colors.background};
+  border-radius: 20px;
   padding: 2.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: ${colors.shadowLg};
   margin-bottom: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid ${colors.border};
   position: relative;
-  overflow: hidden;
   
   &::before {
     content: '';
@@ -102,71 +145,141 @@ const InputSection = styled.div`
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    height: 4px;
+    background: linear-gradient(90deg, ${colors.primary} 0%, ${colors.info} 50%, ${colors.success} 100%);
+    border-radius: 20px 20px 0 0;
+  }
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ${colors.textPrimary};
+  margin: 0 0 1.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  
+  &::before {
+    content: '';
+    width: 4px;
+    height: 24px;
+    background: ${colors.primary};
+    border-radius: 2px;
   }
 `;
 
 const InputGroup = styled.div`
-  display: flex;
-  gap: 1rem;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1.5rem;
+  align-items: end;
   
   @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: stretch;
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 `;
 
 const InputWrapper = styled.div`
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 `;
 
 const Label = styled.label`
   display: block;
-  margin-bottom: 0.5rem;
   font-weight: 600;
-  color: #1e1e1e;
-  font-size: 0.9rem;
+  color: ${colors.textPrimary};
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
 `;
 
 const URLInput = styled.input`
   width: 100%;
-  padding: 0.75rem 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  border: 2px solid ${colors.border};
+  border-radius: 12px;
   font-size: 1rem;
-  transition: all 0.2s ease;
+  background: ${colors.backgroundSecondary};
+  color: ${colors.textPrimary};
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
   
   &:focus {
     outline: none;
-    border-color: #1e1e1e;
-    box-shadow: 0 0 0 3px rgba(30, 30, 30, 0.1);
+    border-color: ${colors.primary};
+    background: ${colors.background};
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
   }
   
   &:disabled {
-    background-color: #f3f4f6;
+    background-color: ${colors.backgroundTertiary};
     cursor: not-allowed;
+    opacity: 0.6;
+    border-color: ${colors.borderLight};
+  }
+  
+  &::placeholder {
+    color: ${colors.textMuted};
+  }
+`;
+
+const APIKeySelect = styled.select`
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: 2px solid ${colors.border};
+  border-radius: 12px;
+  font-size: 0.875rem;
+  background: ${colors.backgroundSecondary};
+  color: ${colors.textPrimary};
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+  cursor: pointer;
+  
+  &:focus {
+    outline: none;
+    border-color: ${colors.primary};
+    background: ${colors.background};
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  }
+  
+  &:disabled {
+    background-color: ${colors.backgroundTertiary};
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 1rem;
+  
+  @media (max-width: 768px) {
+    width: 100%;
   }
 `;
 
 const ScrapeButton = styled.button`
-  padding: 0.75rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #ffffff;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%);
+  color: white;
   border: none;
   border-radius: 12px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 160px;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  box-shadow: ${colors.shadowMd};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    box-shadow: ${colors.shadowLg};
   }
   
   &:active:not(:disabled) {
@@ -174,22 +287,25 @@ const ScrapeButton = styled.button`
   }
   
   &:disabled {
-    background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+    background: ${colors.textMuted};
     cursor: not-allowed;
     transform: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: ${colors.shadow};
+  }
+  
+  @media (max-width: 768px) {
+    width: 100%;
   }
 `;
 
 const LoadingSpinner = styled.div`
   display: inline-block;
-  width: 20px;
-  height: 20px;
-  border: 2px solid #ffffff;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  border-top-color: transparent;
+  border-top-color: #ffffff;
   animation: spin 1s ease-in-out infinite;
-  margin-right: 8px;
   
   @keyframes spin {
     to { transform: rotate(360deg); }
@@ -197,14 +313,12 @@ const LoadingSpinner = styled.div`
 `;
 
 const ResultsContainer = styled.div`
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
+  background: ${colors.background};
+  border-radius: 20px;
   padding: 2.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: ${colors.shadowLg};
+  border: 1px solid ${colors.border};
   position: relative;
-  overflow: hidden;
   
   &::before {
     content: '';
@@ -212,63 +326,81 @@ const ResultsContainer = styled.div`
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #10b981, #059669);
+    height: 4px;
+    background: linear-gradient(90deg, ${colors.success} 0%, ${colors.info} 50%, ${colors.primary} 100%);
+    border-radius: 20px 20px 0 0;
   }
 `;
 
 const ErrorMessage = styled.div`
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  padding: 1rem;
-  color: #991b1b;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 12px;
+  padding: 1.25rem;
+  color: ${colors.error};
+  font-weight: 500;
   margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 `;
 
 const SuccessHeader = styled.div`
-  border-bottom: 2px solid #f3f4f6;
-  padding-bottom: 1rem;
+  border-bottom: 2px solid ${colors.border};
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, ${colors.backgroundSecondary} 0%, ${colors.backgroundTertiary} 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
   margin-bottom: 2rem;
 `;
 
 const SiteTitle = styled.h2`
-  margin: 0 0 0.5rem 0;
-  color: #1e1e1e;
+  margin: 0 0 0.75rem 0;
+  color: ${colors.textPrimary};
   font-size: 1.5rem;
+  font-weight: 700;
 `;
 
 const SiteURL = styled.p`
   margin: 0;
-  color: #6b7280;
-  font-size: 0.9rem;
+  color: ${colors.textSecondary};
+  font-size: 0.875rem;
+  word-break: break-all;
 `;
 
 const MetricsRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin: 1rem 0;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
 `;
 
 const MetricCard = styled.div`
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 1rem;
+  background: ${colors.backgroundSecondary};
+  border: 1px solid ${colors.border};
+  border-radius: 16px;
+  padding: 1.5rem;
   text-align: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${colors.shadowMd};
+  }
 `;
 
 const MetricValue = styled.div`
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: 700;
-  color: #1e1e1e;
-  margin-bottom: 0.25rem;
+  color: ${colors.primary};
+  margin-bottom: 0.5rem;
 `;
 
 const MetricLabel = styled.div`
-  font-size: 0.8rem;
-  color: #6b7280;
+  font-size: 0.875rem;
+  color: ${colors.textSecondary};
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 `;
@@ -277,31 +409,43 @@ const Section = styled.div`
   margin: 2rem 0;
 `;
 
-const SectionTitle = styled.h3`
-  margin: 0 0 1rem 0;
-  color: #1e1e1e;
-  font-size: 1.2rem;
-  border-bottom: 2px solid #1e1e1e;
-  padding-bottom: 0.5rem;
+const ResultSectionTitle = styled.h3`
+  margin: 0 0 1.5rem 0;
+  color: ${colors.textPrimary};
+  font-size: 1.25rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  
+  &::before {
+    content: '';
+    width: 4px;
+    height: 20px;
+    background: ${colors.primary};
+    border-radius: 2px;
+  }
 `;
 
 const Description = styled.p`
-  color: #4b5563;
+  color: ${colors.textSecondary};
   line-height: 1.6;
-  margin: 0 0 1rem 0;
+  margin: 0 0 1.5rem 0;
+  font-size: 0.9rem;
 `;
 
 const ListContainer = styled.div`
-  max-height: 300px;
+  max-height: 400px;
   overflow-y: auto;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 1rem;
+  border: 1px solid ${colors.border};
+  border-radius: 12px;
+  padding: 1.5rem;
+  background: ${colors.backgroundSecondary};
 `;
 
 const ListItem = styled.div`
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid ${colors.border};
   
   &:last-child {
     border-bottom: none;
@@ -309,50 +453,55 @@ const ListItem = styled.div`
 `;
 
 const Link = styled.a`
-  color: #1e1e1e;
+  color: ${colors.primary};
   text-decoration: none;
   font-weight: 500;
   
   &:hover {
     text-decoration: underline;
+    color: ${colors.primaryDark};
   }
 `;
 
 const ExternalBadge = styled.span`
-  background: #1e1e1e;
-  color: #ffffff;
-  font-size: 0.7rem;
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin-left: 8px;
+  background: ${colors.primary};
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  margin-left: 0.5rem;
 `;
 
 const TabContainer = styled.div`
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 1px solid ${colors.border};
   margin-bottom: 2rem;
+  background: ${colors.backgroundSecondary};
+  border-radius: 12px 12px 0 0;
 `;
 
 const TabList = styled.div`
   display: flex;
   gap: 0;
   overflow-x: auto;
+  padding: 0.5rem;
 `;
 
 const Tab = styled.button<{ active: boolean }>`
-  padding: 1rem 1.5rem;
+  padding: 0.875rem 1.5rem;
   border: none;
-  background: ${props => props.active ? '#1e1e1e' : 'transparent'};
-  color: ${props => props.active ? '#ffffff' : '#6b7280'};
+  background: ${props => props.active ? colors.primary : 'transparent'};
+  color: ${props => props.active ? 'white' : colors.textSecondary};
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border-bottom: 3px solid ${props => props.active ? '#1e1e1e' : 'transparent'};
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
   white-space: nowrap;
   
   &:hover {
-    background: ${props => props.active ? '#1e1e1e' : '#f3f4f6'};
-    color: ${props => props.active ? '#ffffff' : '#1e1e1e'};
+    background: ${props => props.active ? colors.primaryDark : colors.backgroundTertiary};
+    color: ${props => props.active ? 'white' : colors.textPrimary};
   }
 `;
 
@@ -365,13 +514,13 @@ const WordCloudContainer = styled.div`
 
 const WordBubble = styled.span<{ size: number }>`
   display: inline-block;
-  background: linear-gradient(135deg, #1e1e1e, #2d2d2d);
-  color: white;
+  background: linear-gradient(135deg, ${colors.accent}, ${colors.mutedBlue});
+  color: ${colors.lightText};
   padding: ${props => Math.max(4, props.size * 2)}px ${props => Math.max(8, props.size * 4)}px;
   border-radius: 20px;
   font-size: ${props => Math.max(0.7, props.size)}rem;
   font-weight: 600;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s ease;
   
   &:hover {
@@ -406,16 +555,16 @@ const GridContainer = styled.div`
 `;
 
 const Card = styled.div`
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: ${colors.raisinBlack};
+  border: 1px solid ${colors.mutedBlue};
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 `;
 
 const CardTitle = styled.h4`
   margin: 0 0 1rem 0;
-  color: #1e1e1e;
+  color: ${colors.lightText};
   font-size: 1.1rem;
   font-weight: 600;
 `;
@@ -428,12 +577,12 @@ const ImageGrid = styled.div`
 `;
 
 const ImageCard = styled.div`
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: ${colors.raisinBlack};
+  border: 1px solid ${colors.mutedBlue};
   border-radius: 8px;
   padding: 1rem;
   text-align: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 `;
 
 const ImagePreview = styled.img`
@@ -445,8 +594,8 @@ const ImagePreview = styled.img`
 `;
 
 const ExportButton = styled.button`
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
+  background: linear-gradient(135deg, ${colors.accent}, ${colors.mutedBlue});
+  color: ${colors.lightText};
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -457,7 +606,8 @@ const ExportButton = styled.button`
   
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 4px 8px rgba(123, 104, 238, 0.3);
+    background: linear-gradient(135deg, ${colors.lightBlue}, ${colors.accent});
   }
 `;
 
@@ -478,11 +628,15 @@ const StatusIndicator = styled.div<{ status: 'good' | 'medium' | 'poor' }>`
 `;
 
 const WebScraper: React.FC = () => {
+  const { showToast } = useToast();
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ScrapedData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [apiKeys, setApiKeys] = useState<any[]>([]);
+  const [selectedApiKey, setSelectedApiKey] = useState<string>('');
+  const [loadingKeys, setLoadingKeys] = useState(true);
 
   const getReadabilityStatus = (score: number): 'good' | 'medium' | 'poor' => {
     if (score >= 60) return 'good';
@@ -521,9 +675,38 @@ const WebScraper: React.FC = () => {
       .slice(0, count);
   };
 
+  // Fetch API keys on component mount
+  useEffect(() => {
+    const fetchApiKeys = async () => {
+      try {
+        setLoadingKeys(true);
+        const keys = await apiService.getApiKeys();
+        setApiKeys(keys);
+        // Auto-select the first active key if available
+        const activeKey = keys.find((key: any) => key.is_active);
+        if (activeKey) {
+          setSelectedApiKey(activeKey.key);
+        }
+      } catch (err: any) {
+        showToast(err.response?.data?.error || 'Failed to load API keys', 'error');
+      } finally {
+        setLoadingKeys(false);
+      }
+    };
+
+    fetchApiKeys();
+  }, [showToast]);
+
   const handleScrape = async () => {
     if (!url.trim()) {
       setError('Please enter a valid URL');
+      showToast('Please enter a valid URL', 'error');
+      return;
+    }
+
+    if (!selectedApiKey) {
+      setError('Please select an API key');
+      showToast('Please select an API key', 'error');
       return;
     }
 
@@ -532,17 +715,20 @@ const WebScraper: React.FC = () => {
     setResult(null);
 
     try {
-      const response = await axios.post<ScrapeResponse>('http://localhost:8080/api/scrape', {
-        url: url.trim()
-      });
+      const response = await apiService.scrapeWebsite(url.trim(), selectedApiKey);
 
-      if (response.data.success && response.data.data) {
-        setResult(response.data.data);
+      if (response.success && response.data) {
+        setResult(response.data);
+        showToast('Website scraped successfully!', 'success');
       } else {
-        setError(response.data.error || 'Failed to scrape website');
+        const errorMsg = response.error || 'Failed to scrape website';
+        setError(errorMsg);
+        showToast(errorMsg, 'error');
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || 'Network error occurred');
+      const errorMsg = err.response?.data?.error || err.message || 'Network error occurred';
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
     } finally {
       setLoading(false);
     }
@@ -556,7 +742,13 @@ const WebScraper: React.FC = () => {
 
   return (
     <ScraperContainer>
+      <PageHeader>
+        <h1>Web Scraper & Analyzer</h1>
+        <p>Extract comprehensive data from any website including content, metadata, performance metrics, security analysis, and network requests.</p>
+      </PageHeader>
+      
       <InputSection>
+        <SectionTitle>🔍 Website Analysis</SectionTitle>
         <InputGroup>
           <InputWrapper>
             <Label htmlFor="url-input">Website URL</Label>
@@ -570,10 +762,34 @@ const WebScraper: React.FC = () => {
               disabled={loading}
             />
           </InputWrapper>
-          <ScrapeButton onClick={handleScrape} disabled={loading}>
-            {loading && <LoadingSpinner />}
-            {loading ? 'Scraping...' : 'Scrape & Analyze'}
-          </ScrapeButton>
+          <ButtonGroup>
+            <InputWrapper>
+              <Label htmlFor="api-key-select">API Key</Label>
+              {loadingKeys ? (
+                <APIKeySelect disabled>
+                  <option>Loading API keys...</option>
+                </APIKeySelect>
+              ) : (
+                <APIKeySelect
+                  id="api-key-select"
+                  value={selectedApiKey}
+                  onChange={(e) => setSelectedApiKey(e.target.value)}
+                  disabled={loading}
+                >
+                  <option value="">Select an API key</option>
+                  {apiKeys.map((key: any) => (
+                    <option key={key.id} value={key.key}>
+                      {key.name} {key.is_active ? '' : '(Inactive)'}
+                    </option>
+                  ))}
+                </APIKeySelect>
+              )}
+            </InputWrapper>
+            <ScrapeButton onClick={handleScrape} disabled={loading || !selectedApiKey}>
+              {loading && <LoadingSpinner />}
+              {loading ? 'Analyzing...' : '🚀 Start Analysis'}
+            </ScrapeButton>
+          </ButtonGroup>
         </InputGroup>
       </InputSection>
 

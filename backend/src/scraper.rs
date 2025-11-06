@@ -1,19 +1,23 @@
 use anyhow::{anyhow, Result};
 use reqwest::Client;
 use scraper::{Html, Selector};
+use std::cell::Cell;
 use std::collections::HashMap;
+use std::ffi::OsStr;
+use std::rc::Rc;
 use std::time::{Duration, Instant};
 use url::Url;
 use regex::Regex;
 use base64::{engine::general_purpose, Engine as _};
 
-use headless_chrome::{Browser, LaunchOptionsBuilder, protocol::page::ScreenshotFormat};
+use headless_chrome::{Browser, LaunchOptions, LaunchOptionsBuilder};
 use cookie::Cookie;
 
-use crate::{ScrapedData, LinkInfo, ImageInfo, NetworkResource, ConsoleLog, SecurityReport};
+use crate::{ImageInfo, LinkInfo, NetworkRequest, PerformanceMetrics, SecurityAnalysis, NetworkResource, ConsoleLog, SecurityReport, ScrapedData};
 
 pub async fn scrape_url(url: &str) -> Result<ScrapedData> {
     let start_time = Instant::now();
+    println!("🔍 Starting scrape for URL: {}", url);
 
     // Validate URL
     let parsed_url = Url::parse(url).map_err(|_| anyhow!("Invalid URL format"))?;
@@ -39,91 +43,96 @@ pub async fn scrape_url(url: &str) -> Result<ScrapedData> {
         .collect::<HashMap<String, String>>();
 
     let html_content = response.text().await?;
-    let document = Html::parse_document(&html_content);
+    println!("✅ HTML fetched, parsing content...");
+    let (title, description, headings, links, images, meta_tags, text_content) = {
+        let document = Html::parse_document(&html_content);
+
+        // Basic extraction (title, description, headings, links, images, meta)
+        let title_selector = Selector::parse("title").unwrap();
+        let title = document
+            .select(&title_selector)
+            .next()
+            .map(|el| el.text().collect::<String>())
+            .unwrap_or_else(|| "No title found".to_string());
+
+        let description_selector = Selector::parse("meta[name='description']").unwrap();
+        let description = document
+            .select(&description_selector)
+            .next()
+            .and_then(|el| el.value().attr("content"))
+            .unwrap_or("No description found")
+            .to_string();
+
+        let mut headings = Vec::new();
+        for i in 1..=6 {
+            let heading_selector = Selector::parse(&format!("h{}", i)).unwrap();
+            for element in document.select(&heading_selector) {
+                let text = element.text().collect::<String>().trim().to_string();
+                if !text.is_empty() {
+                    headings.push(format!("H{}: {}", i, text));
+                }
+            }
+        }
+
+        let link_selector = Selector::parse("a[href]").unwrap();
+        let mut links = Vec::new();
+        for element in document.select(&link_selector) {
+            if let Some(href) = element.value().attr("href") {
+                let text = element.text().collect::<String>().trim().to_string();
+                let is_external = is_external_link(href, &parsed_url);
+                links.push(LinkInfo {
+                    text: if text.is_empty() { href.to_string() } else { text },
+                    href: href.to_string(),
+                    is_external,
+                });
+            }
+        }
+
+        let img_selector = Selector::parse("img").unwrap();
+        let mut images = Vec::new();
+        for element in document.select(&img_selector) {
+            if let Some(src) = element.value().attr("src") {
+                images.push(ImageInfo {
+                    alt: element.value().attr("alt").unwrap_or("").to_string(),
+                    src: src.to_string(),
+                    width: element.value().attr("width").map(|s| s.to_string()),
+                    height: element.value().attr("height").map(|s| s.to_string()),
+                });
+            }
+        }
+
+        let meta_selector = Selector::parse("meta").unwrap();
+        let mut meta_tags = HashMap::new();
+        for element in document.select(&meta_selector) {
+            if let Some(name) = element.value().attr("name") {
+                if let Some(content) = element.value().attr("content") {
+                    meta_tags.insert(name.to_string(), content.to_string());
+                }
+            }
+            if let Some(property) = element.value().attr("property") {
+                if let Some(content) = element.value().attr("content") {
+                    meta_tags.insert(property.to_string(), content.to_string());
+                }
+            }
+        }
+
+        // Extract text content and analyze
+        let text_selector = Selector::parse("body").unwrap();
+        let text_content = document
+            .select(&text_selector)
+            .next()
+            .map(|el| {
+                let text = el.text().collect::<Vec<_>>().join(" ");
+                // Clean up whitespace
+                let re = Regex::new(r"\s+").unwrap();
+                re.replace_all(&text, " ").trim().to_string()
+            })
+            .unwrap_or_default();
+        
+        (title, description, headings, links, images, meta_tags, text_content)
+    };
 
     let response_time = start_time.elapsed().as_millis() as u64;
-
-    // Basic extraction (title, description, headings, links, images, meta)
-    let title_selector = Selector::parse("title").unwrap();
-    let title = document
-        .select(&title_selector)
-        .next()
-        .map(|el| el.text().collect::<String>())
-        .unwrap_or_else(|| "No title found".to_string());
-
-    let description_selector = Selector::parse("meta[name='description']").unwrap();
-    let description = document
-        .select(&description_selector)
-        .next()
-        .and_then(|el| el.value().attr("content"))
-        .unwrap_or("No description found")
-        .to_string();
-
-    let mut headings = Vec::new();
-    for i in 1..=6 {
-        let heading_selector = Selector::parse(&format!("h{}", i)).unwrap();
-        for element in document.select(&heading_selector) {
-            let text = element.text().collect::<String>().trim().to_string();
-            if !text.is_empty() {
-                headings.push(format!("H{}: {}", i, text));
-            }
-        }
-    }
-
-    let link_selector = Selector::parse("a[href]").unwrap();
-    let mut links = Vec::new();
-    for element in document.select(&link_selector) {
-        if let Some(href) = element.value().attr("href") {
-            let text = element.text().collect::<String>().trim().to_string();
-            let is_external = is_external_link(href, &parsed_url);
-            links.push(LinkInfo {
-                text: if text.is_empty() { href.to_string() } else { text },
-                href: href.to_string(),
-                is_external,
-            });
-        }
-    }
-
-    let img_selector = Selector::parse("img").unwrap();
-    let mut images = Vec::new();
-    for element in document.select(&img_selector) {
-        if let Some(src) = element.value().attr("src") {
-            images.push(ImageInfo {
-                alt: element.value().attr("alt").unwrap_or("").to_string(),
-                src: src.to_string(),
-                width: element.value().attr("width").map(|s| s.to_string()),
-                height: element.value().attr("height").map(|s| s.to_string()),
-            });
-        }
-    }
-
-    let meta_selector = Selector::parse("meta").unwrap();
-    let mut meta_tags = HashMap::new();
-    for element in document.select(&meta_selector) {
-        if let Some(name) = element.value().attr("name") {
-            if let Some(content) = element.value().attr("content") {
-                meta_tags.insert(name.to_string(), content.to_string());
-            }
-        }
-        if let Some(property) = element.value().attr("property") {
-            if let Some(content) = element.value().attr("content") {
-                meta_tags.insert(property.to_string(), content.to_string());
-            }
-        }
-    }
-
-    // Extract text content and analyze
-    let text_selector = Selector::parse("body").unwrap();
-    let text_content = document
-        .select(&text_selector)
-        .next()
-        .map(|el| {
-            let text = el.text().collect::<Vec<_>>().join(" ");
-            // Clean up whitespace
-            let re = Regex::new(r"\s+").unwrap();
-            re.replace_all(&text, " ").trim().to_string()
-        })
-        .unwrap_or_default();
 
     let word_count = text_content.split_whitespace().count();
     let reading_time_minutes = word_count as f64 / 200.0;
@@ -137,31 +146,30 @@ pub async fn scrape_url(url: &str) -> Result<ScrapedData> {
         .collect();
     let page_size_kb = html_content.len() as f64 / 1024.0;
 
+    // Drop the non-Send document before awaiting further async operations
+    // drop(document);
+
     // Collect cookies from response Set-Cookie headers
     let mut cookie_issues = Vec::new();
-    if let Some(set_cookie_values) = response.headers().get_all("set-cookie").iter().next() {
-        // Note: headers().get_all returns iterator; we'll iterate all
-        for val in response.headers().get_all("set-cookie").iter() {
-            if let Ok(s) = val.to_str() {
-                if let Ok(parsed) = Cookie::parse_encoded(s.to_string()) {
-                    let mut issues = Vec::new();
-                    // cookie crate doesn't provide attributes parsing here; check flags textually
-                    if !s.to_lowercase().contains("httponly") {
-                        issues.push("Missing HttpOnly".to_string());
-                    }
-                    if !s.to_lowercase().contains("secure") {
-                        issues.push("Missing Secure".to_string());
-                    }
-                    if !issues.is_empty() {
-                        cookie_issues.push(format!("{}: {}", parsed.name(), issues.join(", ")));
-                    }
-                }
+    if let Some(set_cookie_value) = headers_map.get("set-cookie") {
+        if let Ok(parsed) = Cookie::parse(set_cookie_value.to_string()) {
+            let mut issues = Vec::new();
+            // Check cookie security attributes
+            if !set_cookie_value.to_lowercase().contains("httponly") {
+                issues.push("Missing HttpOnly".to_string());
+            }
+            if !set_cookie_value.to_lowercase().contains("secure") {
+                issues.push("Missing Secure".to_string());
+            }
+            if !issues.is_empty() {
+                cookie_issues.push(format!("{}: {}", parsed.name(), issues.join(", ")));
             }
         }
     }
 
     // Use a headless browser to render the page and collect runtime info (performance entries, console logs, screenshot)
     // headless_chrome is synchronous; run in blocking thread to avoid blocking tokio's async runtime
+    println!("🌐 Starting browser collection...");
     let url_owned = url.to_string();
     let browser_collect = tokio::task::spawn_blocking(move || -> Result<(
         Option<String>,
@@ -172,39 +180,47 @@ pub async fn scrape_url(url: &str) -> Result<ScrapedData> {
         let browser = Browser::new(
             LaunchOptionsBuilder::default()
                 .headless(true)
+                .args(vec![
+                    std::ffi::OsStr::new("--no-sandbox"),
+                    std::ffi::OsStr::new("--disable-gpu"), 
+                    std::ffi::OsStr::new("--disable-dev-shm-usage"),
+                    std::ffi::OsStr::new("--disable-extensions"),
+                    std::ffi::OsStr::new("--disable-background-timer-throttling"),
+                    std::ffi::OsStr::new("--disable-backgrounding-occluded-windows"),
+                    std::ffi::OsStr::new("--disable-renderer-backgrounding")
+                ])
                 .build()
                 .map_err(|e| anyhow!("failed to build browser launch options: {}", e))?,
         )?;
 
         let tab = browser.new_tab()?;
 
-        // Inject console capture before any page script runs
-        let _ = tab.add_script_to_evaluate_on_new_document(r#"
-            window.__consoleMessages = [];
-            (function() {
-                const methods = ['log','warn','error','info'];
-                methods.forEach(m => {
-                    const orig = console[m];
-                    console[m] = function(...args) {
-                        try { window.__consoleMessages.push({level:m, args: args.map(a => {
-                            try { return JSON.stringify(a); } catch(e) { return String(a); }
-                        })}); } catch(e) {}
-                        orig.apply(console, args);
-                    }
-                });
-            })();
-        "#)?;
-
+        // Navigate with timeout
         tab.navigate_to(&url_owned)?;
-        // Wait for load; best-effort: wait for body element or 10s
-        let _ = tab.wait_for_element("body");
+        
+        // Wait for load with shorter timeout (5 seconds max)
+        let wait_start = std::time::Instant::now();
+        while wait_start.elapsed() < Duration::from_secs(5) {
+            if let Ok(_) = tab.wait_for_element_with_custom_timeout("body", Duration::from_millis(100)) {
+                break;
+            }
+        }
 
         // Get rendered HTML
         let rendered = tab.get_content()?;
 
-        // Screenshot PNG
-        let png_data = tab.capture_screenshot(ScreenshotFormat::PNG, None, None, true)?;
-        let screenshot_b64 = Some(general_purpose::STANDARD.encode(&png_data));
+        // Screenshot (using the correct API)
+        use headless_chrome::protocol::cdp::Page;
+        let screenshot_result = tab.capture_screenshot(
+            Page::CaptureScreenshotFormatOption::Png,
+            None,
+            None,
+            false
+        );
+        let screenshot_b64 = match screenshot_result {
+            Ok(data) => Some(general_purpose::STANDARD.encode(&data)),
+            Err(_) => None,
+        };
 
         // Collect performance entries (resources)
         let perf_eval = tab.evaluate(
@@ -252,7 +268,7 @@ pub async fn scrape_url(url: &str) -> Result<ScrapedData> {
                                 .and_then(|v| v.as_array())
                                 .map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect::<Vec<_>>())
                                 .unwrap_or_default();
-                            console_logs.push(ConsoleLog { level, args });
+                            console_logs.push(ConsoleLog { level, message: args.join(" ") });
                         }
                     }
                 }
@@ -260,10 +276,27 @@ pub async fn scrape_url(url: &str) -> Result<ScrapedData> {
         }
 
         Ok((Some(rendered), screenshot_b64, network_resources, console_logs))
-    })
-    .await?;
+    });
 
-    let (rendered_html_opt, screenshot_opt, network_resources, console_logs) = browser_collect?;
+    // Add timeout to browser collection (60 seconds max)
+    let browser_result = tokio::time::timeout(
+        Duration::from_secs(60),
+        browser_collect
+    ).await;
+
+    let (rendered_html_opt, screenshot_opt, network_resources, console_logs) = match browser_result {
+        Ok(Ok(result)) => result?,
+        Ok(Err(e)) => {
+            println!("⚠️ Browser collection failed: {}", e);
+            // Return default values if browser fails
+            (None, None, Vec::new(), Vec::new())
+        },
+        Err(_) => {
+            println!("⚠️ Browser collection timed out after 60 seconds");
+            // Return default values if browser times out
+            (None, None, Vec::new(), Vec::new())
+        }
+    };
 
     // Security analysis
     let is_https = parsed_url.scheme() == "https";
@@ -316,7 +349,7 @@ pub async fn scrape_url(url: &str) -> Result<ScrapedData> {
         is_https,
         mixed_content,
         missing_security_headers,
-        insecure_cookies: cookie_issues,
+        insecure_cookies: !cookie_issues.is_empty(),
         csp,
         notes,
     };
