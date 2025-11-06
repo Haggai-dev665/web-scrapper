@@ -18,7 +18,7 @@
 2. **Update CORS settings** in `backend/src/main.rs`
    ```rust
    .allow_origin([
-       "https://webscrapper.live".parse().unwrap(),
+       "https://webscraper.live".parse().unwrap(),
        // Add your frontend URL here
    ])
    ```
@@ -84,18 +84,18 @@ vercel --prod
 
 1. **Add custom domain to Heroku**
    ```bash
-   heroku domains:add api.webscrapper.live -a webscrapper-api
+   heroku domains:add api.webscraper.live -a webscrapper-api
    ```
 
 2. **Configure DNS**
-   - Add CNAME record: `api.webscrapper.live` → `your-app.herokuapp.com`
-   - Add A record: `webscrapper.live` → Your frontend hosting IP
+   - Add CNAME record: `api.webscraper.live` → `your-app.herokuapp.com`
+   - Add A record: `webscraper.live` → Your frontend hosting IP
 
 ### Step 7: Environment Variables for Frontend
 
 Update `frontend/.env.production`:
 ```
-VITE_API_URL=https://api.webscrapper.live
+VITE_API_URL=https://api.webscraper.live
 ```
 
 ## MongoDB Atlas Setup
@@ -192,4 +192,4 @@ VITE_API_URL=https://api.webscrapper.live
 
 For issues or questions:
 - GitHub Issues: https://github.com/Haggai-dev665/web-scrapper/issues
-- Email: support@webscrapper.live
+- Email: support@webscraper.live

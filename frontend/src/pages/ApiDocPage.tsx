@@ -320,7 +320,7 @@ const ApiDocPage: React.FC = () => {
 
                 <SubsectionTitle>Base URL</SubsectionTitle>
                 <CodeBlock>
-                  <code>https://api.webscrapper.live/api</code>
+                  <code>https://api.webscraper.live/api</code>
                 </CodeBlock>
                 <Text>
                   For local development:
@@ -331,14 +331,14 @@ const ApiDocPage: React.FC = () => {
 
                 <SubsectionTitle>Quick Start</SubsectionTitle>
                 <Text>
-                  1. Create an account at <a href="/register">webscrapper.live/register</a><br/>
+                  1. Create an account at <a href="/register">webscraper.live/register</a><br/>
                   2. Generate an API key from your dashboard<br/>
                   3. Make your first API call with your API key<br/>
                   4. Start building amazing applications!
                 </Text>
 
                 <CodeBlock>{`# Example: Health Check
-curl https://api.webscrapper.live/api/health
+curl https://api.webscraper.live/api/health
 
 # Response
 {
@@ -378,7 +378,7 @@ curl https://api.webscrapper.live/api/health
                 </Alert>
 
                 <SubsectionTitle>Authentication Example</SubsectionTitle>
-                <CodeBlock>{`curl -X POST https://api.webscrapper.live/api/scrape \\
+                <CodeBlock>{`curl -X POST https://api.webscraper.live/api/scrape \\
   -H "Content-Type: application/json" \\
   -H "X-API-Key: sk_live_abc123..." \\
   -d '{"url": "https://example.com"}'`}</CodeBlock>
@@ -395,7 +395,7 @@ curl https://api.webscrapper.live/api/health
                   <InlineCode>/api/health</InlineCode>
                 </div>
                 <Text>Check the API service status.</Text>
-                <CodeBlock>{`curl https://api.webscrapper.live/api/health`}</CodeBlock>
+                <CodeBlock>{`curl https://api.webscraper.live/api/health`}</CodeBlock>
 
                 <SubsectionTitle>Scrape Website</SubsectionTitle>
                 <div>
@@ -423,7 +423,7 @@ curl https://api.webscrapper.live/api/health
                   </tbody>
                 </Table>
 
-                <CodeBlock>{`curl -X POST https://api.webscrapper.live/api/scrape \\
+                <CodeBlock>{`curl -X POST https://api.webscraper.live/api/scrape \\
   -H "Content-Type: application/json" \\
   -H "X-API-Key: your_api_key" \\
   -d '{
@@ -712,7 +712,7 @@ X-RateLimit-Reset: 1635724800`}</CodeBlock>
 const scrapeWebsite = async (url) => {
   try {
     const response = await axios.post(
-      'https://api.webscrapper.live/api/scrape',
+      'https://api.webscraper.live/api/scrape',
       { url },
       {
         headers: {
@@ -738,7 +738,7 @@ scrapeWebsite('https://example.com');`}</CodeBlock>
                 <CodeBlock>{`import requests
 
 def scrape_website(url):
-    api_url = 'https://api.webscrapper.live/api/scrape'
+    api_url = 'https://api.webscraper.live/api/scrape'
     headers = {
         'Content-Type': 'application/json',
         'X-API-Key': 'your_api_key_here'
@@ -759,7 +759,7 @@ def scrape_website(url):
 scrape_website('https://example.com')`}</CodeBlock>
 
                 <SubsectionTitle>cURL</SubsectionTitle>
-                <CodeBlock>{`curl -X POST https://api.webscrapper.live/api/scrape \\
+                <CodeBlock>{`curl -X POST https://api.webscraper.live/api/scrape \\
   -H "Content-Type: application/json" \\
   -H "X-API-Key: your_api_key_here" \\
   -d '{"url": "https://example.com"}' \\

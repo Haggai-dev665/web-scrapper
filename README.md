@@ -277,7 +277,7 @@ WebScraper.live provides a powerful API that you can use in your own application
 
 ### 1. Generate Your API Key
 
-1. Sign up at [webscrapper.live](https://webscrapper.live)
+1. Sign up at [webscraper.live](https://webscraper.live)
 2. Navigate to your Dashboard
 3. Go to "API Keys" section
 4. Click "Create New API Key"
@@ -292,7 +292,7 @@ const axios = require('axios');
 async function scrapeWebsite(url) {
   try {
     const response = await axios.post(
-      'https://api.webscrapper.live/api/scrape',
+      'https://api.webscraper.live/api/scrape',
       { url },
       {
         headers: {
@@ -326,7 +326,7 @@ def scrape_website(url):
         'X-API-Key': 'your_api_key_here'
     }
     response = requests.post(
-        'https://api.webscrapper.live/api/scrape',
+        'https://api.webscraper.live/api/scrape',
         json={'url': url},
         headers=headers
     )
@@ -346,7 +346,7 @@ Full API documentation available at [/api-docs](/api-docs)
 
 ## 🚀 Deployment to Heroku
 
-Designed for deployment on Heroku at **webscrapper.live**. See [DEPLOYMENT.md](DEPLOYMENT.md) for details.
+Designed for deployment on Heroku at **webscraper.live**. See [DEPLOYMENT.md](DEPLOYMENT.md) for details.
 
 ## 🤝 Contributing
 
