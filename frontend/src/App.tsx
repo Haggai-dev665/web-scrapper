@@ -6,6 +6,7 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import Dashboard from './pages/Dashboard';
+import ApiDocPage from './pages/ApiDocPage';
 import './App.css';
 
 // Protected Route component
@@ -41,6 +42,7 @@ function App() {
                 <LandingPage />
               </PublicRoute>
             } />
+            <Route path="/api-docs" element={<ApiDocPage />} />
             <Route path="/login" element={
               <PublicRoute>
                 <LoginPage />

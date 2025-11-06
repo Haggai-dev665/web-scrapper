@@ -9,30 +9,13 @@ import {
   FiMenu,
   FiX,
   FiUser,
-  FiStar
+  FiStar,
+  FiActivity,
+  FiShield,
+  FiClock,
+  FiFileText
 } from 'react-icons/fi';
-
-// Modern Color Palette (same as Dashboard)
-const colors = {
-  primary: '#6366F1',
-  primaryDark: '#4F46E5',
-  primaryLight: '#A5B4FC',
-  background: '#FFFFFF',
-  backgroundSecondary: '#F8FAFC',
-  backgroundTertiary: '#F1F5F9',
-  textPrimary: '#0F172A',
-  textSecondary: '#475569',
-  textMuted: '#94A3B8',
-  success: '#10B981',
-  warning: '#F59E0B',
-  error: '#EF4444',
-  info: '#3B82F6',
-  border: '#E2E8F0',
-  borderLight: '#F1F5F9',
-  shadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-  shadowMd: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-  shadowLg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-};
+import colors from '../theme/colors';
 
 const SidebarContainer = styled.div<{ isOpen: boolean }>`
   position: fixed;
@@ -40,11 +23,11 @@ const SidebarContainer = styled.div<{ isOpen: boolean }>`
   top: 0;
   height: 100vh;
   width: ${props => props.isOpen ? '280px' : '80px'};
-  background: ${colors.background};
-  border-right: 1px solid ${colors.border};
+  background: ${colors.white};
+  border-right: 2px solid ${colors.border};
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
-  box-shadow: ${colors.shadowLg};
+  box-shadow: 0 4px 15px ${colors.shadow};
   display: flex;
   flex-direction: column;
   
@@ -78,14 +61,14 @@ const LogoIcon = styled.div`
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%);
+  background: linear-gradient(135deg, ${colors.turquoise} 0%, ${colors.darkTurquoise} 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-size: 1.25rem;
   font-weight: bold;
-  box-shadow: ${colors.shadowMd};
+  box-shadow: 0 4px 12px ${colors.shadow};
 `;
 
 const Logo = styled.div<{ isOpen: boolean }>`
@@ -95,7 +78,7 @@ const Logo = styled.div<{ isOpen: boolean }>`
   .title {
     font-size: 1.125rem;
     font-weight: 700;
-    color: ${colors.textPrimary};
+    color: ${colors.brown};
     margin: 0;
     line-height: 1.2;
   }
@@ -144,15 +127,15 @@ const NavItem = styled.div<{ active: boolean; isOpen: boolean }>`
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 12px;
-  background-color: ${props => props.active ? colors.primary : 'transparent'};
+  background-color: ${props => props.active ? colors.turquoise : 'transparent'};
   color: ${props => props.active ? 'white' : colors.textSecondary};
   position: relative;
   
   &:hover {
-    background-color: ${props => props.active ? colors.primaryDark : colors.backgroundTertiary};
-    color: ${props => props.active ? 'white' : colors.textPrimary};
+    background-color: ${props => props.active ? colors.darkTurquoise : colors.backgroundTertiary};
+    color: ${props => props.active ? 'white' : colors.brown};
     transform: translateY(-1px);
-    box-shadow: ${props => props.active ? colors.shadowMd : colors.shadow};
+    box-shadow: ${props => props.active ? `0 4px 12px ${colors.turquoise}40` : colors.shadow};
   }
   
   .icon {
@@ -261,13 +244,22 @@ interface SidebarProps {
   setCurrentPage: (page: string) => void;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
+  user?: {
+    first_name?: string;
+    last_name?: string;
+    subscription_tier?: string;
+  } | null;
 }
 
 const navItems = [
   { id: 'home', label: 'Dashboard', icon: FiHome },
   { id: 'scraper', label: 'Web Scraper', icon: FiGlobe },
+  { id: 'history', label: 'History', icon: FiClock },
   { id: 'api-keys', label: 'API Keys', icon: FiKey },
   { id: 'analytics', label: 'Analytics', icon: FiBarChart2 },
+  { id: 'network', label: 'Network Analysis', icon: FiActivity },
+  { id: 'security', label: 'Security Reports', icon: FiShield },
+  { id: 'documentation', label: 'Docs', icon: FiFileText },
   { id: 'settings', label: 'Settings', icon: FiSettings },
 ];
 
@@ -275,8 +267,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   currentPage, 
   setCurrentPage, 
   isOpen, 
-  setIsOpen 
+  setIsOpen,
+  user 
 }) => {
+  const displayName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User' : 'Guest';
+  const subscriptionTier = user?.subscription_tier || 'Free';
+  
   return (
     <SidebarContainer isOpen={isOpen}>
       <SidebarHeader isOpen={isOpen}>
@@ -306,9 +302,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             >
               <IconComponent className="icon" />
               <span className="label">{item.label}</span>
-              {item.id === 'scraper' && (
-                <span className="badge">New</span>
-              )}
             </NavItem>
           );
         })}
@@ -320,10 +313,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             <FiUser />
           </div>
           <div className="info">
-            <div className="name">John Doe</div>
+            <div className="name">{displayName}</div>
             <div className="tier">
               <FiStar className="crown" />
-              Pro Plan
+              {subscriptionTier} Plan
             </div>
           </div>
           <div className="status"></div>
