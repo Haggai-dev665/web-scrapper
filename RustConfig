@@ -1,1 +1,2 @@
-VERSION=1.70.0
+# RustConfig for Heroku deployment
+VERSION=1.80.0
