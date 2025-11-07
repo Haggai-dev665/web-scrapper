@@ -1,13 +1,13 @@
 # 🔍 WebScraper.live - Advanced Web Intelligence Platform
 
-A powerful, full-stack web scraping application built with **Rust** for the backend and **React TypeScript** for the frontend. Extract, analyze, and secure insights from any website with military-grade precision and comprehensive security analysis.
+A powerful, full-stack web scraping application built with **Node.js + Puppeteer** for the backend and **React TypeScript** for the frontend. Extract, analyze, and secure insights from any website with advanced browser automation and comprehensive security analysis.
 
 ![Web Scraper Interface](https://github.com/user-attachments/assets/fb07f572-46bb-450b-b56a-257428285711)
 
 ## ✨ Features
 
 ### Core Capabilities
-- **🚀 High-Performance Backend**: Built with Rust using Axum framework for blazing-fast performance
+- **🚀 High-Performance Backend**: Built with Node.js and Puppeteer for advanced browser automation
 - **🎨 Beautiful UI**: Modern React interface with harmonious color palette (cream, turquoise, brown)
 - **📊 Comprehensive Analysis**: Extract titles, descriptions, headings, links, images, and metadata
 - **⚡ Real-time Processing**: Live feedback with loading states and error handling
@@ -16,7 +16,7 @@ A powerful, full-stack web scraping application built with **Rust** for the back
 - **🛡️ Error Handling**: Robust error handling with user-friendly messages
 
 ### Advanced Features
-- **🖼️ Screenshot Capture**: Automatic high-quality screenshots of every scraped page
+- **🖼️ Screenshot Capture**: Automatic high-quality screenshots of every scraped page using Puppeteer
 - **🔒 Security Analysis**: Comprehensive security reports including:
   - HTTPS status and mixed content detection
   - Missing security headers identification
@@ -25,6 +25,7 @@ A powerful, full-stack web scraping application built with **Rust** for the back
   - Common vulnerability detection
 - **🌐 Network Analysis**: Detailed network resource tracking and performance metrics
 - **📝 Console Logs**: Capture JavaScript console messages for debugging
+- **🤖 Headless Chrome**: Full browser automation with Puppeteer for JavaScript-heavy sites
 - **🔐 OAuth Integration**: Google and GitHub authentication (coming soon)
 - **📊 Usage Analytics**: Track API usage, response times, and success rates
 - **🔑 API Key Management**: Generate and manage multiple API keys
@@ -35,31 +36,29 @@ A powerful, full-stack web scraping application built with **Rust** for the back
 ```
 ┌─────────────────┐    HTTP/JSON    ┌─────────────────┐
 │                 │ ──────────────► │                 │
-│  React Frontend │                 │  Rust Backend   │
-│  (TypeScript)   │ ◄────────────── │     (Axum)      │
+│  React Frontend │                 │  Node.js Backend│
+│  (TypeScript)   │ ◄────────────── │   (Puppeteer)   │
 │                 │                 │                 │
 └─────────────────┘                 └─────────────────┘
         │                                     │
         │                                     │
    ┌────▼────┐                           ┌────▼────┐
-   │ Styled  │                           │ Scraper │
+   │ Styled  │                           │Puppeteer│
    │Components│                           │ Engine  │
    └─────────┘                           └─────────┘
 ```
 
 ## 🛠️ Technology Stack
 
-### Backend (Rust)
-- **Axum**: Modern web framework
-- **Reqwest**: HTTP client for web requests
-- **Scraper**: HTML parsing and CSS selection
-- **Headless Chrome**: Browser automation for JavaScript rendering
-- **Tokio**: Async runtime
-- **Serde**: JSON serialization/deserialization
-- **Tower-HTTP**: CORS middleware
+### Backend (Node.js)
+- **Express**: Fast, minimalist web framework
+- **Puppeteer**: Headless Chrome automation for advanced scraping
+- **Puppeteer-Extra**: Enhanced Puppeteer with stealth plugin
+- **TypeScript**: Type-safe development
 - **MongoDB**: Database for user data and API keys
 - **JWT**: Secure authentication
 - **Bcrypt**: Password hashing
+- **CORS**: Cross-origin resource sharing
 
 ### Frontend (React)
 - **React 18**: Latest React with hooks
@@ -73,9 +72,9 @@ A powerful, full-stack web scraping application built with **Rust** for the back
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Rust 1.70+ (`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs/ | sh`)
 - Node.js 18+ (`https://nodejs.org/`)
 - npm or yarn
+- MongoDB (local or cloud instance)
 
 ### 🔧 Installation
 
@@ -85,20 +84,29 @@ A powerful, full-stack web scraping application built with **Rust** for the back
    cd web-scrapper
    ```
 
-2. **Start the Backend**
+2. **Set up environment variables**
    ```bash
    cd backend
-   cargo run
+   cp .env.example .env
+   # Edit .env with your MongoDB URI and JWT secret
+   ```
+
+3. **Start the Backend**
+   ```bash
+   cd backend
+   npm install
+   npm run build
+   npm start
    ```
    The API will be available at `http://localhost:8080`
 
-3. **Start the Frontend** (in a new terminal)
+4. **Start the Frontend** (in a new terminal)
    ```bash
    cd frontend
    npm install
-   npm start
+   npm run dev
    ```
-   The UI will be available at `http://localhost:3000`
+   The UI will be available at `http://localhost:5173`
 
 ## 📋 API Documentation
 
@@ -223,7 +231,7 @@ The scraper extracts the following information:
 ### Backend Testing
 ```bash
 cd backend
-cargo test
+npm test
 ```
 
 ### Frontend Testing
@@ -237,9 +245,10 @@ npm test
 # Health check
 curl http://localhost:8080/api/health
 
-# Scrape a website
+# Scrape a website (requires API key)
 curl -X POST \
   -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key-here" \
   -d '{"url":"https://example.com"}' \
   http://localhost:8080/api/scrape
 ```
@@ -247,28 +256,41 @@ curl -X POST \
 ## 🔧 Configuration
 
 ### Backend Configuration
-- **Port**: Default `8080` (configurable via environment)
-- **CORS**: Enabled for all origins in development
+- **Port**: Default `8080` (configurable via PORT environment variable)
+- **CORS**: Enabled for specified origins
 - **Timeout**: 30 seconds for HTTP requests
+- **MongoDB**: Configurable via MONGODB_URI environment variable
+- **JWT Secret**: Configurable via JWT_SECRET environment variable
 
 ### Frontend Configuration
-- **API Base URL**: `http://localhost:8080/api`
-- **Development Port**: `3000`
+- **API Base URL**: `http://localhost:8080/api` (development)
+- **Development Port**: `5173` (Vite default)
 
 ## 🚀 Deployment
 
 ### Backend (Production)
 ```bash
 cd backend
-cargo build --release
-./target/release/web-scraper-backend
+npm install
+npm run build
+npm start
 ```
 
 ### Frontend (Production)
 ```bash
 cd frontend
+npm install
 npm run build
-# Serve the build folder with any static file server
+# Serve the dist folder with any static file server
+```
+
+### Environment Variables
+Create a `.env` file in the backend directory:
+```env
+PORT=8080
+MONGODB_URI=mongodb://localhost:27017
+JWT_SECRET=your-secret-key-here
+NODE_ENV=production
 ```
 
 ## 🔑 Using API Keys in Your Projects
@@ -362,7 +384,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🎯 Implemented Features
 
-- [x] Screenshot capture functionality
+- [x] Screenshot capture functionality with Puppeteer
 - [x] Network security analysis with detailed reports
 - [x] Headless Chrome rendering for JavaScript-heavy sites
 - [x] API key authentication and management
@@ -374,6 +396,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [x] Network resource analysis
 - [x] Console log capture
 - [x] Modern responsive UI with custom color theme
+- [x] Full Node.js + Puppeteer backend implementation
 - [ ] Batch URL processing
 - [ ] Data export (CSV, JSON)
 - [ ] Historical scraping data visualization
@@ -395,4 +418,4 @@ If you encounter any issues or have questions, please:
 
 ---
 
-**Built with ❤️ using Rust and React**
+**Built with ❤️ using Node.js, Puppeteer, and React**
