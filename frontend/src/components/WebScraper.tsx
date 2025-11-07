@@ -91,6 +91,15 @@ interface SecurityAnalysis {
   recommendations: string[];
 }
 
+interface SecurityReport {
+  is_https: boolean;
+  mixed_content: boolean;
+  missing_security_headers: string[];
+  insecure_cookies: boolean;
+  csp?: string;
+  notes: string[];
+}
+
 interface PerformanceMetrics {
   total_load_time_ms: number;
   dom_ready_time_ms: number;
@@ -119,12 +128,15 @@ interface ScrapedData {
   language: string;
   social_media_links: LinkInfo[];
   page_size_kb: number;
-  network_requests: NetworkRequest[];
-  security_analysis: SecurityAnalysis;
-  performance_metrics: PerformanceMetrics;
-  console_logs: string[];
-  cookies: Record<string, string>;
+  network_requests?: NetworkRequest[];
+  network_resources?: any[];
+  console_logs?: any[];
+  security_analysis?: SecurityAnalysis;
+  security_report?: SecurityReport;  // Add both for compatibility
+  performance_metrics?: PerformanceMetrics;
+  cookies?: Record<string, string>;
   response_headers: Record<string, string>;
+  rendered_html?: string;
 }
 
 interface LinkInfo {
@@ -578,8 +590,8 @@ const WordCloudContainer = styled.div`
 
 const WordBubble = styled.span<{ size: number }>`
   display: inline-block;
-  background: linear-gradient(135deg, ${colors.accent}, ${colors.mutedBlue});
-  color: ${colors.lightText};
+  background: linear-gradient(135deg, ${colors.primary}, ${colors.info});
+  color: white;
   padding: ${props => Math.max(4, props.size * 2)}px ${props => Math.max(8, props.size * 4)}px;
   border-radius: 20px;
   font-size: ${props => Math.max(0.7, props.size)}rem;
@@ -619,16 +631,16 @@ const GridContainer = styled.div`
 `;
 
 const Card = styled.div`
-  background: ${colors.raisinBlack};
-  border: 1px solid ${colors.mutedBlue};
+  background: ${colors.background};
+  border: 1px solid ${colors.border};
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: ${colors.shadowMd};
 `;
 
 const CardTitle = styled.h4`
   margin: 0 0 1rem 0;
-  color: ${colors.lightText};
+  color: ${colors.textPrimary};
   font-size: 1.1rem;
   font-weight: 600;
 `;
@@ -641,12 +653,12 @@ const ImageGrid = styled.div`
 `;
 
 const ImageCard = styled.div`
-  background: ${colors.raisinBlack};
-  border: 1px solid ${colors.mutedBlue};
+  background: ${colors.background};
+  border: 1px solid ${colors.border};
   border-radius: 8px;
   padding: 1rem;
   text-align: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: ${colors.shadow};
 `;
 
 const ImagePreview = styled.img`
@@ -658,8 +670,8 @@ const ImagePreview = styled.img`
 `;
 
 const ExportButton = styled.button`
-  background: linear-gradient(135deg, ${colors.accent}, ${colors.mutedBlue});
-  color: ${colors.lightText};
+  background: linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark});
+  color: white;
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -667,11 +679,12 @@ const ExportButton = styled.button`
   cursor: pointer;
   margin-left: 1rem;
   transition: all 0.2s ease;
+  box-shadow: ${colors.shadowMd};
   
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(123, 104, 238, 0.3);
-    background: linear-gradient(135deg, ${colors.lightBlue}, ${colors.accent});
+    transform: translateY(-2px);
+    box-shadow: ${colors.shadowLg};
+    background: linear-gradient(135deg, ${colors.primaryDark}, ${colors.primary});
   }
 `;
 
@@ -1168,75 +1181,158 @@ const WebScraper: React.FC = () => {
             </Section>
           )}
 
-          {activeTab === 'security' && result.security_analysis && (
-            <Section>
-              <SectionTitle>Security Analysis</SectionTitle>
+          {activeTab === 'security' && (result.security_analysis || result.security_report) && (
+            <Section delay={0.1}>
+              <ResultSectionTitle>🔒 Security Analysis</ResultSectionTitle>
               <div style={{ marginBottom: '1.5rem' }}>
-                <div style={{ 
-                  display: 'inline-flex', 
-                  alignItems: 'center', 
-                  padding: '0.5rem 1rem', 
-                  borderRadius: '8px',
-                  backgroundColor: result.security_analysis.risk_level === 'low' ? '#dcfce7' : 
-                                  result.security_analysis.risk_level === 'medium' ? '#fef3c7' : '#fee2e2',
-                  color: result.security_analysis.risk_level === 'low' ? '#166534' : 
-                         result.security_analysis.risk_level === 'medium' ? '#92400e' : '#991b1b',
-                  fontWeight: 'bold',
-                  marginBottom: '1rem'
-                }}>
-                  {result.security_analysis.risk_level === 'low' ? '🟢' : 
-                   result.security_analysis.risk_level === 'medium' ? '🟡' : '🔴'} 
-                  Risk Level: {result.security_analysis.risk_level.toUpperCase()}
-                </div>
+                {/* Handle both SecurityAnalysis and SecurityReport formats */}
+                {result.security_report && (
+                  <>
+                    <div style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      padding: '0.75rem 1.25rem', 
+                      borderRadius: '12px',
+                      backgroundColor: result.security_report.is_https && !result.security_report.insecure_cookies && !result.security_report.mixed_content ? '#dcfce7' : 
+                                      result.security_report.is_https ? '#fef3c7' : '#fee2e2',
+                      color: result.security_report.is_https && !result.security_report.insecure_cookies && !result.security_report.mixed_content ? '#166534' : 
+                             result.security_report.is_https ? '#92400e' : '#991b1b',
+                      fontWeight: '600',
+                      marginBottom: '1.5rem',
+                      fontSize: '1rem'
+                    }}>
+                      {result.security_report.is_https && !result.security_report.insecure_cookies && !result.security_report.mixed_content ? '🟢 Good Security' : 
+                       result.security_report.is_https ? '🟡 Moderate Security' : '🔴 Poor Security'} 
+                    </div>
 
-                <MetricsRow>
-                  <MetricCard>
-                    <MetricValue>{result.security_analysis.https ? '✅' : '❌'}</MetricValue>
-                    <MetricLabel>HTTPS</MetricLabel>
-                  </MetricCard>
-                  <MetricCard>
-                    <MetricValue>{result.security_analysis.cookies_secure ? '✅' : '❌'}</MetricValue>
-                    <MetricLabel>Secure Cookies</MetricLabel>
-                  </MetricCard>
-                  <MetricCard>
-                    <MetricValue>{result.security_analysis.mixed_content ? '❌' : '✅'}</MetricValue>
-                    <MetricLabel>No Mixed Content</MetricLabel>
-                  </MetricCard>
-                  <MetricCard>
-                    <MetricValue>{result.security_analysis.insecure_forms ? '❌' : '✅'}</MetricValue>
-                    <MetricLabel>Secure Forms</MetricLabel>
-                  </MetricCard>
-                </MetricsRow>
+                    <MetricsRow>
+                      <MetricCard>
+                        <MetricValue>{result.security_report.is_https ? '✅' : '❌'}</MetricValue>
+                        <MetricLabel>HTTPS</MetricLabel>
+                      </MetricCard>
+                      <MetricCard>
+                        <MetricValue>{!result.security_report.insecure_cookies ? '✅' : '❌'}</MetricValue>
+                        <MetricLabel>Secure Cookies</MetricLabel>
+                      </MetricCard>
+                      <MetricCard>
+                        <MetricValue>{!result.security_report.mixed_content ? '✅' : '❌'}</MetricValue>
+                        <MetricLabel>No Mixed Content</MetricLabel>
+                      </MetricCard>
+                      <MetricCard>
+                        <MetricValue>{result.security_report.missing_security_headers.length === 0 ? '✅' : '⚠️'}</MetricValue>
+                        <MetricLabel>Security Headers</MetricLabel>
+                      </MetricCard>
+                    </MetricsRow>
+
+                    {result.security_report.missing_security_headers && result.security_report.missing_security_headers.length > 0 && (
+                      <div style={{ marginBottom: '1.5rem', marginTop: '1.5rem' }}>
+                        <h4 style={{ margin: '0 0 0.75rem 0', color: colors.textPrimary }}>Missing Security Headers ({result.security_report.missing_security_headers.length})</h4>
+                        <ListContainer>
+                          {result.security_report.missing_security_headers.map((header, index) => (
+                            <ListItem key={index}>
+                              <span style={{ color: colors.warning }}>⚠️</span> {header}
+                            </ListItem>
+                          ))}
+                        </ListContainer>
+                      </div>
+                    )}
+
+                    {result.security_report.csp && (
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <h4 style={{ margin: '0 0 0.75rem 0', color: colors.textPrimary }}>Content Security Policy</h4>
+                        <ListContainer>
+                          <ListItem style={{ wordBreak: 'break-all' }}>
+                            {result.security_report.csp}
+                          </ListItem>
+                        </ListContainer>
+                      </div>
+                    )}
+
+                    {result.security_report.notes && result.security_report.notes.length > 0 && (
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <h4 style={{ margin: '0 0 0.75rem 0', color: colors.textPrimary }}>Security Notes ({result.security_report.notes.length})</h4>
+                        <ListContainer>
+                          {result.security_report.notes.map((note, index) => (
+                            <ListItem key={index}>
+                              <span style={{ color: colors.info }}>ℹ️</span> {note}
+                            </ListItem>
+                          ))}
+                        </ListContainer>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Fallback to old format if security_analysis exists */}
+                {result.security_analysis && !result.security_report && (
+                  <>
+                    <div style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      padding: '0.5rem 1rem', 
+                      borderRadius: '8px',
+                      backgroundColor: result.security_analysis.risk_level === 'low' ? '#dcfce7' : 
+                                      result.security_analysis.risk_level === 'medium' ? '#fef3c7' : '#fee2e2',
+                      color: result.security_analysis.risk_level === 'low' ? '#166534' : 
+                             result.security_analysis.risk_level === 'medium' ? '#92400e' : '#991b1b',
+                      fontWeight: 'bold',
+                      marginBottom: '1rem'
+                    }}>
+                      {result.security_analysis.risk_level === 'low' ? '🟢' : 
+                       result.security_analysis.risk_level === 'medium' ? '🟡' : '🔴'} 
+                      Risk Level: {result.security_analysis.risk_level.toUpperCase()}
+                    </div>
+
+                    <MetricsRow>
+                      <MetricCard>
+                        <MetricValue>{result.security_analysis.https ? '✅' : '❌'}</MetricValue>
+                        <MetricLabel>HTTPS</MetricLabel>
+                      </MetricCard>
+                      <MetricCard>
+                        <MetricValue>{result.security_analysis.cookies_secure ? '✅' : '❌'}</MetricValue>
+                        <MetricLabel>Secure Cookies</MetricLabel>
+                      </MetricCard>
+                      <MetricCard>
+                        <MetricValue>{result.security_analysis.mixed_content ? '❌' : '✅'}</MetricValue>
+                        <MetricLabel>No Mixed Content</MetricLabel>
+                      </MetricCard>
+                      <MetricCard>
+                        <MetricValue>{result.security_analysis.insecure_forms ? '❌' : '✅'}</MetricValue>
+                        <MetricLabel>Secure Forms</MetricLabel>
+                      </MetricCard>
+                    </MetricsRow>
+
+                    {result.security_analysis.security_headers && Object.keys(result.security_analysis.security_headers).length > 0 && (
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <h4 style={{ margin: '0 0 0.75rem 0', color: '#1e1e1e' }}>Security Headers</h4>
+                        <ListContainer>
+                          {Object.entries(result.security_analysis.security_headers).map(([header, value]) => (
+                            <ListItem key={header} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                              <strong style={{ color: '#1e1e1e' }}>{header}</strong>
+                              <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>{value}</span>
+                            </ListItem>
+                          ))}
+                        </ListContainer>
+                      </div>
+                    )}
+
+                    {result.security_analysis.third_party_requests && result.security_analysis.third_party_requests.length > 0 && (
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <h4 style={{ margin: '0 0 0.75rem 0', color: '#1e1e1e' }}>Third-Party Requests ({result.security_analysis.third_party_requests.length})</h4>
+                        <ListContainer>
+                          {result.security_analysis.third_party_requests.map((domain, index) => (
+                            <ListItem key={index}>
+                              <span style={{ color: '#f59e0b' }}>⚠️</span> {domain}
+                            </ListItem>
+                          ))}
+                        </ListContainer>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
 
-              {result.security_analysis.security_headers && Object.keys(result.security_analysis.security_headers).length > 0 && (
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <h4 style={{ margin: '0 0 0.75rem 0', color: '#1e1e1e' }}>Security Headers</h4>
-                  <ListContainer>
-                    {Object.entries(result.security_analysis.security_headers).map(([header, value]) => (
-                      <ListItem key={header} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <strong style={{ color: '#1e1e1e' }}>{header}</strong>
-                        <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>{value}</span>
-                      </ListItem>
-                    ))}
-                  </ListContainer>
-                </div>
-              )}
-
-              {result.security_analysis.third_party_requests && result.security_analysis.third_party_requests.length > 0 && (
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <h4 style={{ margin: '0 0 0.75rem 0', color: '#1e1e1e' }}>Third-Party Requests ({result.security_analysis.third_party_requests.length})</h4>
-                  <ListContainer>
-                    {result.security_analysis.third_party_requests.map((domain, index) => (
-                      <ListItem key={index}>
-                        <span style={{ color: '#f59e0b' }}>⚠️</span> {domain}
-                      </ListItem>
-                    ))}
-                  </ListContainer>
-                </div>
-              )}
-
-              {result.security_analysis.recommendations && result.security_analysis.recommendations.length > 0 && (
+              {result.security_analysis?.recommendations && result.security_analysis.recommendations.length > 0 && (
                 <div>
                   <h4 style={{ margin: '0 0 0.75rem 0', color: '#1e1e1e' }}>Security Recommendations</h4>
                   <ListContainer>
