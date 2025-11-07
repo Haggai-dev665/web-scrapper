@@ -123,6 +123,8 @@ export class ScraperService {
       await page.waitForTimeout(2000);
 
       // Extract page data
+      // Note: Code inside page.evaluate() runs in browser context, not Node.js
+      // @ts-ignore comments are necessary as TypeScript doesn't recognize browser globals (document, window)
       const pageData = await page.evaluate(() => {
         // @ts-ignore - Running in browser context
         // Extract title
