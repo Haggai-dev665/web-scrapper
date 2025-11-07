@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { apiService } from '../services/api';
 import { useToast } from './Toast';
+import Loader from './Loader';
 
 // Modern Color Palette
 const colors = {
@@ -24,6 +25,49 @@ const colors = {
   shadowMd: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
   shadowLg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
 };
+
+// Animation keyframes
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const slideInLeft = keyframes`
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+`;
+
+const scaleIn = keyframes`
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+`;
+
+const shimmer = keyframes`
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+`;
 
 // Types
 interface NetworkRequest {
@@ -319,6 +363,7 @@ const ResultsContainer = styled.div`
   box-shadow: ${colors.shadowLg};
   border: 1px solid ${colors.border};
   position: relative;
+  animation: ${fadeIn} 0.5s ease-out;
   
   &::before {
     content: '';
@@ -371,9 +416,18 @@ const SiteURL = styled.p`
 
 const MetricsRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1.5rem;
   margin: 2rem 0;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const MetricCard = styled.div`
@@ -382,11 +436,18 @@ const MetricCard = styled.div`
   border-radius: 16px;
   padding: 1.5rem;
   text-align: center;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: ${scaleIn} 0.5s ease-out;
+  animation-fill-mode: both;
   
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: ${colors.shadowMd};
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: ${colors.shadowLg};
+    border-color: ${colors.primary};
+  }
+
+  @media (max-width: 768px) {
+    padding: 1rem;
   }
 `;
 
@@ -405,8 +466,11 @@ const MetricLabel = styled.div`
   letter-spacing: 0.05em;
 `;
 
-const Section = styled.div`
+const Section = styled.div<{ delay?: number }>`
   margin: 2rem 0;
+  animation: ${slideInLeft} 0.6s ease-out;
+  animation-delay: ${props => props.delay || 0}s;
+  animation-fill-mode: both;
 `;
 
 const ResultSectionTitle = styled.h3`
@@ -793,13 +857,23 @@ const WebScraper: React.FC = () => {
         </InputGroup>
       </InputSection>
 
-      {error && (
+      {loading && (
+        <ResultsContainer>
+          <Loader 
+            text="Analyzing website..." 
+            subtext="Extracting data, capturing screenshots, and running security analysis"
+            size="large"
+          />
+        </ResultsContainer>
+      )}
+
+      {error && !loading && (
         <ErrorMessage>
           <strong>Error:</strong> {error}
         </ErrorMessage>
       )}
 
-      {result && (
+      {result && !loading && (
         <ResultsContainer>
           <SuccessHeader>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
