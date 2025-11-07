@@ -1,1 +1,1 @@
-web: cd backend && ./target/release/web-scraper-backend
+web: ./target/release/web-scraper-backend
