@@ -23,6 +23,7 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+package-lock.json
 
 # Build outputs
 build/
@@ -39,10 +40,14 @@ ehthumbs.db
 Thumbs.db
 .vscode/
 .idea/
+.vs/
 
 # Logs
 logs/
 *.log
+
+# Puppeteer
+.local-chromium/
 
 #Ignore vscode AI rules
 .github\instructions\codacy.instructions.md

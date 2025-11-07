@@ -1,0 +1,171 @@
+import express, { Request, Response } from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import path from 'path';
+import { DatabaseConnection } from './services/database';
+import { AuthService } from './services/auth';
+import { ScraperService } from './services/scraper';
+import { authMiddleware, apiKeyMiddleware } from './middleware/auth';
+import { createAuthRoutes } from './routes/auth';
+import { createScrapeRoutes } from './routes/scrape';
+import { createApiKeyRoutes } from './routes/apiKeys';
+import { createDashboardRoutes } from './routes/dashboard';
+import { createAnalyticsRoutes } from './routes/analytics';
+
+// Load environment variables
+dotenv.config();
+
+const app = express();
+
+// Middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// CORS configuration
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173',
+  'https://webscrap-9f292cec4bcc.herokuapp.com'
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all origins in development
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key']
+}));
+
+// Initialize services
+let db: DatabaseConnection;
+let authService: AuthService;
+let scraperService: ScraperService;
+
+async function initializeServices() {
+  console.log('🔧 Initializing services...');
+  
+  // Initialize database
+  db = await DatabaseConnection.create();
+  console.log('✅ Database initialized');
+  
+  // Initialize auth service
+  authService = new AuthService(db);
+  console.log('✅ Auth service initialized');
+  
+  // Initialize scraper service
+  scraperService = new ScraperService();
+  await scraperService.initialize();
+  console.log('✅ Scraper service initialized');
+}
+
+// Health check endpoint
+app.get('/api/health', (_req: Request, res: Response) => {
+  res.json({
+    status: 'healthy',
+    service: 'web-scraper-backend',
+    version: '0.1.0'
+  });
+});
+
+// Setup routes after initialization
+async function setupRoutes() {
+  // Public routes (no authentication required)
+  app.use('/api/auth', createAuthRoutes(authService));
+
+  // Protected routes (require JWT authentication)
+  app.use('/api/dashboard', authMiddleware(authService), createDashboardRoutes(db));
+  app.use('/api/keys', authMiddleware(authService), createApiKeyRoutes(authService, db));
+  app.use('/api/analytics', authMiddleware(authService), createAnalyticsRoutes(db));
+
+  // API routes (require API key authentication)
+  app.use('/api/scrape', apiKeyMiddleware(authService), createScrapeRoutes(scraperService, db));
+
+  // Serve frontend static files
+  const frontendPath = path.join(__dirname, '../../frontend/dist');
+  app.use(express.static(frontendPath));
+
+  // Serve index.html for all other routes (SPA support)
+  app.get('/', (_req: Request, res: Response) => {
+    const indexPath = path.join(frontendPath, 'index.html');
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        res.status(404).send('<h1>Frontend not built</h1>');
+      }
+    });
+  });
+
+  // Fallback for SPA routes
+  app.get('*', (_req: Request, res: Response) => {
+    const indexPath = path.join(frontendPath, 'index.html');
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        res.status(404).send('<h1>Page not found</h1>');
+      }
+    });
+  });
+}
+
+// Error handling
+app.use((err: Error, _req: Request, res: Response, _next: any) => {
+  console.error('Error:', err);
+  res.status(500).json({
+    error: 'Internal server error',
+    message: err.message
+  });
+});
+
+// Start server
+async function startServer() {
+  try {
+    await initializeServices();
+    await setupRoutes();
+
+    const port = process.env.PORT || 8080;
+    const host = '0.0.0.0';
+
+    app.listen(port, () => {
+      console.log(`🚀 Web Scraper API running on http://${host}:${port}`);
+      console.log(`📋 Health check: GET http://${host}:${port}/api/health`);
+      console.log(`👤 Register: POST http://${host}:${port}/api/auth/register`);
+      console.log(`🔑 Login: POST http://${host}:${port}/api/auth/login`);
+      console.log(`🔍 Scrape: POST http://${host}:${port}/api/scrape (requires API key)`);
+      console.log(`📊 Dashboard: GET http://${host}:${port}/api/dashboard/stats (requires JWT)`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, closing gracefully...');
+  if (scraperService) {
+    await scraperService.close();
+  }
+  if (db) {
+    await db.close();
+  }
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received, closing gracefully...');
+  if (scraperService) {
+    await scraperService.close();
+  }
+  if (db) {
+    await db.close();
+  }
+  process.exit(0);
+});
+
+// Start the server
+startServer();
