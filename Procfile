@@ -1,1 +1,1 @@
-web: npm run build && npm run start
+web: cd backend && ./target/release/web-scraper-backend

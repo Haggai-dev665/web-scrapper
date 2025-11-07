@@ -584,13 +584,16 @@ async fn main() {
                 .allow_credentials(true),
         );
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
-    println!("🚀 Web Scraper API running on http://0.0.0.0:8080");
-    println!("📋 Health check: GET http://0.0.0.0:8080/api/health");
-    println!("👤 Register: POST http://0.0.0.0:8080/api/auth/register");
-    println!("🔑 Login: POST http://0.0.0.0:8080/api/auth/login");
-    println!("🔍 Scrape: POST http://0.0.0.0:8080/api/scrape (requires API key)");
-    println!("📊 Dashboard: GET http://0.0.0.0:8080/api/dashboard/stats (requires JWT)");
+    // Use PORT environment variable for Heroku, fallback to 8080 for local
+    let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
+    let addr = format!("0.0.0.0:{}", port);
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+    println!("🚀 Web Scraper API running on http://{}", addr);
+    println!("📋 Health check: GET http://{}/api/health", addr);
+    println!("👤 Register: POST http://{}/api/auth/register", addr);
+    println!("🔑 Login: POST http://{}/api/auth/login", addr);
+    println!("🔍 Scrape: POST http://{}/api/scrape (requires API key)", addr);
+    println!("📊 Dashboard: GET http://{}/api/dashboard/stats (requires JWT)", addr);
     
     axum::serve(listener, app).await.unwrap();
 }
