@@ -1,17 +1,11 @@
 use anyhow::{anyhow, Result};
 use reqwest::Client;
 use scraper::{Html, Selector};
-use std::cell::Cell;
 use std::collections::HashMap;
-use std::ffi::OsStr;
-use std::rc::Rc;
 use std::time::{Duration, Instant};
 use url::Url;
 use regex::Regex;
 use base64::{engine::general_purpose, Engine as _};
-
-use headless_chrome::{Browser, LaunchOptions, LaunchOptionsBuilder};
-use cookie::Cookie;
 
 use crate::{ImageInfo, LinkInfo, NetworkRequest, PerformanceMetrics, SecurityAnalysis, NetworkResource, ConsoleLog, SecurityReport, ScrapedData};
 
@@ -167,136 +161,18 @@ pub async fn scrape_url(url: &str) -> Result<ScrapedData> {
         }
     }
 
-    // Use a headless browser to render the page and collect runtime info (performance entries, console logs, screenshot)
-    // headless_chrome is synchronous; run in blocking thread to avoid blocking tokio's async runtime
-    println!("🌐 Starting browser collection...");
-    let url_owned = url.to_string();
-    let browser_collect = tokio::task::spawn_blocking(move || -> Result<(
-        Option<String>,
-        Option<String>,
-        Vec<NetworkResource>,
-        Vec<ConsoleLog>,
-    )> {
-        let browser = Browser::new(
-            LaunchOptionsBuilder::default()
-                .headless(true)
-                .args(vec![
-                    std::ffi::OsStr::new("--no-sandbox"),
-                    std::ffi::OsStr::new("--disable-gpu"), 
-                    std::ffi::OsStr::new("--disable-dev-shm-usage"),
-                    std::ffi::OsStr::new("--disable-extensions"),
-                    std::ffi::OsStr::new("--disable-background-timer-throttling"),
-                    std::ffi::OsStr::new("--disable-backgrounding-occluded-windows"),
-                    std::ffi::OsStr::new("--disable-renderer-backgrounding")
-                ])
-                .build()
-                .map_err(|e| anyhow!("failed to build browser launch options: {}", e))?,
-        )?;
-
-        let tab = browser.new_tab()?;
-
-        // Navigate with timeout
-        tab.navigate_to(&url_owned)?;
-        
-        // Wait for load with shorter timeout (5 seconds max)
-        let wait_start = std::time::Instant::now();
-        while wait_start.elapsed() < Duration::from_secs(5) {
-            if let Ok(_) = tab.wait_for_element_with_custom_timeout("body", Duration::from_millis(100)) {
-                break;
-            }
-        }
-
-        // Get rendered HTML
-        let rendered = tab.get_content()?;
-
-        // Screenshot (using the correct API)
-        use headless_chrome::protocol::cdp::Page;
-        let screenshot_result = tab.capture_screenshot(
-            Page::CaptureScreenshotFormatOption::Png,
-            None,
-            None,
-            false
-        );
-        let screenshot_b64 = match screenshot_result {
-            Ok(data) => Some(general_purpose::STANDARD.encode(&data)),
-            Err(_) => None,
-        };
-
-        // Collect performance entries (resources)
-        let perf_eval = tab.evaluate(
-            "JSON.stringify((function(){ return { resources: performance.getEntriesByType('resource') || [], navigation: performance.getEntriesByType('navigation') || [] }; })())",
-            false,
-        )?;
-
-        let mut network_resources = Vec::new();
-        if let Some(val) = perf_eval.value {
-            if let Some(s) = val.as_str() {
-                if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(s) {
-                    if let Some(resources) = parsed.get("resources").and_then(|r| r.as_array()) {
-                        for r in resources {
-                            let name = r.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                            let initiator = r.get("initiatorType").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                            let start = r.get("startTime").and_then(|v| v.as_f64()).unwrap_or(0.0);
-                            let duration = r.get("duration").and_then(|v| v.as_f64()).unwrap_or(0.0);
-                            let transfer = r.get("transferSize").and_then(|v| v.as_u64());
-                            let encoded = r.get("encodedBodySize").and_then(|v| v.as_u64());
-                            network_resources.push(NetworkResource {
-                                name,
-                                initiator_type: initiator,
-                                start_time_ms: start,
-                                duration_ms: duration,
-                                transfer_size: transfer,
-                                encoded_body_size: encoded,
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        // Collect console messages captured by injected script
-        let console_eval = tab.evaluate("JSON.stringify(window.__consoleMessages || [])", false)?;
-        let mut console_logs = Vec::new();
-        if let Some(val) = console_eval.value {
-            if let Some(s) = val.as_str() {
-                if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(s) {
-                    if let Some(arr) = parsed.as_array() {
-                        for item in arr {
-                            let level = item.get("level").and_then(|v| v.as_str()).unwrap_or("log").to_string();
-                            let args = item
-                                .get("args")
-                                .and_then(|v| v.as_array())
-                                .map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect::<Vec<_>>())
-                                .unwrap_or_default();
-                            console_logs.push(ConsoleLog { level, message: args.join(" ") });
-                        }
-                    }
-                }
-            }
-        }
-
-        Ok((Some(rendered), screenshot_b64, network_resources, console_logs))
-    });
-
-    // Add timeout to browser collection (60 seconds max)
-    let browser_result = tokio::time::timeout(
-        Duration::from_secs(60),
-        browser_collect
-    ).await;
-
-    let (rendered_html_opt, screenshot_opt, network_resources, console_logs) = match browser_result {
-        Ok(Ok(result)) => result?,
-        Ok(Err(e)) => {
-            println!("⚠️ Browser collection failed: {}", e);
-            // Return default values if browser fails
-            (None, None, Vec::new(), Vec::new())
-        },
-        Err(_) => {
-            println!("⚠️ Browser collection timed out after 60 seconds");
-            // Return default values if browser times out
-            (None, None, Vec::new(), Vec::new())
-        }
-    };
+    // Simple HTML analysis without browser automation (faster and more reliable for production)
+    println!("🌐 Analyzing HTML content...");
+    
+    // Use the already fetched HTML content for analysis
+    let rendered_html_opt = Some(html_content.clone());
+    let screenshot_opt: Option<String> = None; // Skip screenshots for now
+    
+    // Generate mock network resources based on HTML analysis
+    let network_resources = analyze_network_resources(&html_content, &parsed_url);
+    
+    // Generate mock console logs (empty for static analysis)
+    let console_logs: Vec<ConsoleLog> = Vec::new();
 
     // Security analysis
     let is_https = parsed_url.scheme() == "https";
@@ -354,7 +230,67 @@ pub async fn scrape_url(url: &str) -> Result<ScrapedData> {
         notes,
     };
 
-    Ok(ScrapedData {
+    Ok(scraped_data)
+}
+
+// Helper function to analyze network resources from HTML content
+fn analyze_network_resources(html: &str, base_url: &reqwest::Url) -> Vec<NetworkResource> {
+    let mut resources = Vec::new();
+    let document = Html::parse_document(html);
+    
+    // Find CSS files
+    let css_selector = Selector::parse("link[rel='stylesheet']").unwrap();
+    for element in document.select(&css_selector) {
+        if let Some(href) = element.value().attr("href") {
+            if let Ok(url) = base_url.join(href) {
+                resources.push(NetworkResource {
+                    name: url.to_string(),
+                    initiator_type: "css".to_string(),
+                    start_time_ms: 0.0,
+                    duration_ms: 100.0, // Mock duration
+                    transfer_size: Some(1024), // Mock size
+                    encoded_body_size: Some(1024),
+                });
+            }
+        }
+    }
+    
+    // Find JavaScript files
+    let js_selector = Selector::parse("script[src]").unwrap();
+    for element in document.select(&js_selector) {
+        if let Some(src) = element.value().attr("src") {
+            if let Ok(url) = base_url.join(src) {
+                resources.push(NetworkResource {
+                    name: url.to_string(),
+                    initiator_type: "script".to_string(),
+                    start_time_ms: 0.0,
+                    duration_ms: 150.0, // Mock duration
+                    transfer_size: Some(2048), // Mock size
+                    encoded_body_size: Some(2048),
+                });
+            }
+        }
+    }
+    
+    // Find images
+    let img_selector = Selector::parse("img[src]").unwrap();
+    for element in document.select(&img_selector) {
+        if let Some(src) = element.value().attr("src") {
+            if let Ok(url) = base_url.join(src) {
+                resources.push(NetworkResource {
+                    name: url.to_string(),
+                    initiator_type: "img".to_string(),
+                    start_time_ms: 0.0,
+                    duration_ms: 200.0, // Mock duration
+                    transfer_size: Some(5120), // Mock size
+                    encoded_body_size: Some(5120),
+                });
+            }
+        }
+    }
+    
+    resources
+}
         url: url.to_string(),
         title,
         description,

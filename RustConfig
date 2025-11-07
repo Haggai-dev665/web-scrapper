@@ -1,2 +1,2 @@
 # RustConfig for Heroku deployment
-VERSION=1.80.0
+VERSION=nightly
