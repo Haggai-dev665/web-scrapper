@@ -39,7 +39,7 @@ impl DatabaseConnection {
 
     pub async fn get_usage_logs_for_user(&self, user_id: ObjectId, limit: i64) -> Result<Vec<UsageLog>> {
         use mongodb::options::FindOptions;
-        use futures_util::stream::StreamExt;
+        use futures::stream::StreamExt;
 
         let options = FindOptions::builder()
             .sort(doc! { "timestamp": -1 })
@@ -68,7 +68,7 @@ impl DatabaseConnection {
     }
 
     pub async fn get_usage_stats_for_period(&self, user_id: ObjectId, days: i64) -> Result<(i64, i64, f64, f64)> {
-        use futures_util::stream::StreamExt;
+        use futures::stream::StreamExt;
         
         let cutoff_date = Utc::now() - Duration::days(days);
         let cutoff_bson = DateTime::from_millis(cutoff_date.timestamp_millis());

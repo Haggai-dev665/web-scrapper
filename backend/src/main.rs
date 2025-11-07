@@ -9,6 +9,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tower_http::cors::CorsLayer;
+use tower_http::services::ServeDir;
 use mongodb::bson::{doc, DateTime, oid::ObjectId};
 use chrono::Utc;
 use dotenv::dotenv;
@@ -146,6 +147,21 @@ async fn health_check() -> ResponseJson<serde_json::Value> {
         "service": "web-scraper-backend",
         "version": "0.1.0"
     }))
+}
+
+// Serve the frontend index.html for the root route
+async fn serve_frontend() -> impl IntoResponse {
+    use std::path::Path;
+    
+    let index_path = Path::new("../frontend/dist/index.html");
+    if index_path.exists() {
+        match tokio::fs::read_to_string(index_path).await {
+            Ok(content) => axum::response::Html(content),
+            Err(_) => axum::response::Html("<h1>Frontend not built</h1>".to_string()),
+        }
+    } else {
+        axum::response::Html("<h1>Frontend not found</h1>".to_string())
+    }
 }
 
 #[axum::debug_handler]
@@ -547,6 +563,8 @@ async fn main() {
         .merge(public_routes)
         .merge(protected_routes)
         .merge(api_routes)
+        .route("/", get(serve_frontend))
+        .fallback_service(ServeDir::new("../frontend/dist").fallback(tower_http::services::ServeFile::new("../frontend/dist/index.html")))
         .with_state(app_state)
         .layer(
             CorsLayer::new()
@@ -555,6 +573,7 @@ async fn main() {
                     "http://localhost:5173".parse().unwrap(), // Vite dev server
                     "http://127.0.0.1:3000".parse().unwrap(),
                     "http://127.0.0.1:5173".parse().unwrap(),
+                    "https://webscrap-9f292cec4bcc.herokuapp.com".parse().unwrap(), // Production URL
                 ])
                 .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
                 .allow_headers([

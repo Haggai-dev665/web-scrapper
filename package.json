@@ -1,0 +1,12 @@
+{
+  "name": "web-scrapper-fullstack",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "heroku-postbuild": "cd frontend && npm install && npm run build",
+    "start": "cd backend && cargo run --release"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}

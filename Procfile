@@ -1,1 +1,1 @@
-web: cd backend && cargo run --release
+web: npm run build && npm run start
