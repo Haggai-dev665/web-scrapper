@@ -11,6 +11,7 @@ import {
   FiChevronDown
 } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
+import Logo from './Logo';
 
 // Modern Color Palette (same as others)
 const colors = {
@@ -333,7 +334,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, toggleSidebar }) => {
           <FiMenu />
         </MenuButton>
         
-        <PageTitle>Dashboard</PageTitle>
+        <Logo size={32} showText={true} />
       </LeftSection>
       
       <SearchContainer>

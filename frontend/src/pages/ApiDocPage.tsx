@@ -758,12 +758,203 @@ def scrape_website(url):
 
 scrape_website('https://example.com')`}</CodeBlock>
 
+                <SubsectionTitle>Ruby</SubsectionTitle>
+                <CodeBlock>{`require 'net/http'
+require 'json'
+require 'uri'
+
+def scrape_website(url)
+  api_url = URI('https://api.webscraper.live/api/scrape')
+  
+  http = Net::HTTP.new(api_url.host, api_url.port)
+  http.use_ssl = true
+  
+  request = Net::HTTP::Post.new(api_url)
+  request['Content-Type'] = 'application/json'
+  request['X-API-Key'] = 'your_api_key_here'
+  request.body = { url: url }.to_json
+  
+  response = http.request(request)
+  
+  if response.code == '200'
+    result = JSON.parse(response.body)
+    if result['success']
+      puts "Title: #{result['data']['title']}"
+      puts "Links: #{result['data']['links'].length}"
+      puts "Security: #{result['data']['security_report']}"
+    end
+  else
+    puts "Error: #{response.code}"
+  end
+rescue StandardError => e
+  puts "Error: #{e.message}"
+end
+
+scrape_website('https://example.com')`}</CodeBlock>
+
+                <SubsectionTitle>PHP</SubsectionTitle>
+                <CodeBlock>{`<?php
+
+function scrapeWebsite($url) {
+    $apiUrl = 'https://api.webscraper.live/api/scrape';
+    $apiKey = 'your_api_key_here';
+    
+    $data = json_encode(['url' => $url]);
+    
+    $options = [
+        'http' => [
+            'method' => 'POST',
+            'header' => [
+                'Content-Type: application/json',
+                'X-API-Key: ' . $apiKey
+            ],
+            'content' => $data
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $response = file_get_contents($apiUrl, false, $context);
+    
+    if ($response !== false) {
+        $result = json_decode($response, true);
+        
+        if ($result['success']) {
+            echo "Title: " . $result['data']['title'] . "\\n";
+            echo "Links: " . count($result['data']['links']) . "\\n";
+            echo "Security Report: " . json_encode($result['data']['security_report']) . "\\n";
+        }
+    } else {
+        echo "Error fetching data\\n";
+    }
+}
+
+scrapeWebsite('https://example.com');
+
+?>`}</CodeBlock>
+
+                <SubsectionTitle>Go</SubsectionTitle>
+                <CodeBlock>{`package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "io/ioutil"
+    "net/http"
+)
+
+type ScrapeRequest struct {
+    URL string \`json:"url"\`
+}
+
+type ScrapeResponse struct {
+    Success bool                   \`json:"success"\`
+    Data    map[string]interface{} \`json:"data"\`
+    Error   string                 \`json:"error"\`
+}
+
+func scrapeWebsite(url string) error {
+    apiURL := "https://api.webscraper.live/api/scrape"
+    apiKey := "your_api_key_here"
+    
+    reqBody, _ := json.Marshal(ScrapeRequest{URL: url})
+    
+    req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(reqBody))
+    if err != nil {
+        return err
+    }
+    
+    req.Header.Set("Content-Type", "application/json")
+    req.Header.Set("X-API-Key", apiKey)
+    
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return err
+    }
+    defer resp.Body.Close()
+    
+    body, _ := ioutil.ReadAll(resp.Body)
+    
+    var result ScrapeResponse
+    json.Unmarshal(body, &result)
+    
+    if result.Success {
+        fmt.Printf("Title: %v\\n", result.Data["title"])
+        fmt.Printf("Links: %v\\n", len(result.Data["links"].([]interface{})))
+        fmt.Printf("Security: %v\\n", result.Data["security_report"])
+    }
+    
+    return nil
+}
+
+func main() {
+    scrapeWebsite("https://example.com")
+}`}</CodeBlock>
+
+                <SubsectionTitle>Java</SubsectionTitle>
+                <CodeBlock>{`import java.net.http.*;
+import java.net.URI;
+import org.json.JSONObject;
+
+public class WebScraper {
+    private static final String API_URL = "https://api.webscraper.live/api/scrape";
+    private static final String API_KEY = "your_api_key_here";
+    
+    public static void scrapeWebsite(String url) throws Exception {
+        JSONObject requestBody = new JSONObject();
+        requestBody.put("url", url);
+        
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(API_URL))
+            .header("Content-Type", "application/json")
+            .header("X-API-Key", API_KEY)
+            .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
+            .build();
+        
+        HttpResponse<String> response = client.send(request, 
+            HttpResponse.BodyHandlers.ofString());
+        
+        if (response.statusCode() == 200) {
+            JSONObject result = new JSONObject(response.body());
+            
+            if (result.getBoolean("success")) {
+                JSONObject data = result.getJSONObject("data");
+                System.out.println("Title: " + data.getString("title"));
+                System.out.println("Links: " + data.getJSONArray("links").length());
+                System.out.println("Security: " + data.getJSONObject("security_report"));
+            }
+        }
+    }
+    
+    public static void main(String[] args) throws Exception {
+        scrapeWebsite("https://example.com");
+    }
+}`}</CodeBlock>
+
                 <SubsectionTitle>cURL</SubsectionTitle>
-                <CodeBlock>{`curl -X POST https://api.webscraper.live/api/scrape \\
+                <CodeBlock>{`# Basic scrape request
+curl -X POST https://api.webscraper.live/api/scrape \\
   -H "Content-Type: application/json" \\
   -H "X-API-Key: your_api_key_here" \\
   -d '{"url": "https://example.com"}' \\
-  | jq .`}</CodeBlock>
+  | jq .
+
+# Pretty print with jq
+curl -X POST https://api.webscraper.live/api/scrape \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-Key: your_api_key_here" \\
+  -d '{"url": "https://example.com"}' \\
+  | jq '.data | {title, word_count, links: .links | length}'
+
+# Save screenshot to file
+curl -X POST https://api.webscraper.live/api/scrape \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-Key: your_api_key_here" \\
+  -d '{"url": "https://example.com"}' \\
+  | jq -r '.data.screenshot' \\
+  | base64 -d > screenshot.png`}</CodeBlock>
 
                 <Alert type="success">
                   🚀 Ready to start? Sign up for a free account and get your API key today!
