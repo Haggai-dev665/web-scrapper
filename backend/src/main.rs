@@ -150,22 +150,71 @@ async fn health_check() -> ResponseJson<serde_json::Value> {
 
 #[axum::debug_handler]
 async fn scrape_website(
-    State(_state): State<AppState>,
-    Extension(_user_context): Extension<(ObjectId, ObjectId)>,
+    State(state): State<AppState>,
+    Extension(user_context): Extension<(ObjectId, ObjectId)>,
     Json(payload): Json<ScrapeRequest>,
 ) -> ResponseJson<ScrapeResponse> {
+    let (user_id, api_key_id) = user_context;
+    let start_time = std::time::Instant::now();
+    
     match scraper::scrape_url(&payload.url).await {
-            Ok(data) => ResponseJson(ScrapeResponse {
+        Ok(data) => {
+            let response_time_ms = start_time.elapsed().as_millis() as i64;
+            
+            // Save usage log to database
+            let usage_log = models::UsageLog {
+                id: None,
+                user_id,
+                api_key_id,
+                endpoint: "/api/scrape".to_string(),
+                url_scraped: Some(payload.url.clone()),
+                timestamp: DateTime::now(),
+                response_time_ms,
+                success: true,
+                error_message: None,
+                data_size_bytes: serde_json::to_string(&data).unwrap_or_default().len() as i64,
+            };
+            
+            // Log to database (don't fail if logging fails)
+            if let Err(e) = state.db.save_usage_log(usage_log).await {
+                eprintln!("Failed to save usage log: {}", e);
+            }
+            
+            ResponseJson(ScrapeResponse {
                 success: true,
                 data: Some(data),
                 error: None,
-            }),
-            Err(e) => ResponseJson(ScrapeResponse {
+            })
+        },
+        Err(e) => {
+            let response_time_ms = start_time.elapsed().as_millis() as i64;
+            
+            // Save failed attempt to database
+            let usage_log = models::UsageLog {
+                id: None,
+                user_id,
+                api_key_id,
+                endpoint: "/api/scrape".to_string(),
+                url_scraped: Some(payload.url.clone()),
+                timestamp: DateTime::now(),
+                response_time_ms,
+                success: false,
+                error_message: Some(e.to_string()),
+                data_size_bytes: 0,
+            };
+            
+            // Log to database (don't fail if logging fails)
+            if let Err(log_err) = state.db.save_usage_log(usage_log).await {
+                eprintln!("Failed to save usage log: {}", log_err);
+            }
+            
+            ResponseJson(ScrapeResponse {
                 success: false,
                 data: None,
                 error: Some(e.to_string()),
-            }),
-        }
+            })
+        },
+    }
 }
 
 #[derive(Clone)]
@@ -331,44 +380,41 @@ async fn get_dashboard_stats(
     State(state): State<AppState>,
     Extension(user_id): Extension<String>,
 ) -> impl IntoResponse {
-    // Mock dashboard stats for now - in production, calculate from usage_logs
+    let user_id_obj = match ObjectId::parse_str(&user_id) {
+        Ok(id) => id,
+        Err(_) => return (StatusCode::BAD_REQUEST, ResponseJson(serde_json::json!({
+            "error": "Invalid user ID"
+        })))
+    };
+
+    // Fetch real data from database
+    let active_keys = state.db.count_active_api_keys(user_id_obj).await.unwrap_or(0);
+    let recent_logs = state.db.get_usage_logs_for_user(user_id_obj, 10).await.unwrap_or_default();
+    
+    // Get stats for different time periods
+    let (total_today, _, _, _) = state.db.get_usage_stats_for_period(user_id_obj, 1).await.unwrap_or((0, 0, 0.0, 0.0));
+    let (total_month, successful_month, avg_time, success_rate) = state.db.get_usage_stats_for_period(user_id_obj, 30).await.unwrap_or((0, 0, 0.0, 100.0));
+    
+    // Convert recent logs to activity format
+    let recent_activity: Vec<models::RecentActivity> = recent_logs.iter().map(|log| {
+        models::RecentActivity {
+            timestamp: log.timestamp.to_string(),
+            endpoint: log.endpoint.clone(),
+            url_scraped: log.url_scraped.clone(),
+            success: log.success,
+            response_time_ms: log.response_time_ms,
+        }
+    }).collect();
+
     let stats = models::DashboardStats {
-        total_requests_today: 47,
-        total_requests_this_month: 1250,
-        requests_remaining: 8750,
-        active_api_keys: 3,
-        avg_response_time_ms: 1340.5,
-        success_rate: 98.2,
-        recent_activity: vec![
-            models::RecentActivity {
-                timestamp: "2025-11-02T14:30:00Z".to_string(),
-                endpoint: "/api/scrape".to_string(),
-                url_scraped: Some("https://example.com".to_string()),
-                success: true,
-                response_time_ms: 1200,
-            },
-            models::RecentActivity {
-                timestamp: "2025-11-02T14:25:00Z".to_string(),
-                endpoint: "/api/scrape".to_string(),
-                url_scraped: Some("https://news.ycombinator.com".to_string()),
-                success: true,
-                response_time_ms: 890,
-            },
-        ],
-        usage_by_day: vec![
-            models::DailyUsage {
-                date: "2025-11-01".to_string(),
-                requests: 42,
-                success_count: 41,
-                avg_response_time: 1150.0,
-            },
-            models::DailyUsage {
-                date: "2025-11-02".to_string(),
-                requests: 47,
-                success_count: 46,
-                avg_response_time: 1340.5,
-            },
-        ],
+        total_requests_today: total_today,
+        total_requests_this_month: total_month,
+        requests_remaining: 10000 - total_month, // Assuming 10000 limit
+        active_api_keys: active_keys,
+        avg_response_time_ms: avg_time,
+        success_rate,
+        recent_activity,
+        usage_by_day: vec![], // Can be implemented later with daily aggregation
     };
 
     (StatusCode::OK, ResponseJson(serde_json::json!(stats)))
@@ -381,7 +427,7 @@ async fn get_usage_analytics(
 ) -> (StatusCode, ResponseJson<serde_json::Value>) {
     println!("📈 Usage analytics requested for user: {}", user_id);
     
-    let _time_range = params.get("range").unwrap_or(&"7d".to_string());
+    let time_range = params.get("range").unwrap_or(&"7d".to_string()).clone();
     
     // Get real user ID
     let user_id_obj = match ObjectId::parse_str(&user_id) {
@@ -389,15 +435,46 @@ async fn get_usage_analytics(
         Err(_) => return (StatusCode::BAD_REQUEST, ResponseJson(serde_json::json!({"error": "Invalid user ID"})))
     };
     
-    // For now, return mock analytics data
-    // TODO: Implement real analytics from usage logs collection
+    // Parse time range
+    let days = match time_range.as_str() {
+        "24h" => 1,
+        "7d" => 7,
+        "30d" => 30,
+        _ => 7,
+    };
+    
+    // Get real analytics from database
+    let (total_requests, successful_requests, avg_response_time, _success_rate) = 
+        state.db.get_usage_stats_for_period(user_id_obj, days).await.unwrap_or((0, 0, 0.0, 100.0));
+    
+    let failed_requests = total_requests - successful_requests;
+    
+    // Get recent logs to extract top domains
+    let recent_logs = state.db.get_usage_logs_for_user(user_id_obj, 100).await.unwrap_or_default();
+    let mut domain_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+    
+    for log in recent_logs {
+        if let Some(url) = log.url_scraped {
+            if let Ok(parsed_url) = url::Url::parse(&url) {
+                if let Some(domain) = parsed_url.host_str() {
+                    *domain_counts.entry(domain.to_string()).or_insert(0) += 1;
+                }
+            }
+        }
+    }
+    
+    // Get top 5 domains
+    let mut domains: Vec<_> = domain_counts.into_iter().collect();
+    domains.sort_by(|a, b| b.1.cmp(&a.1));
+    let top_domains: Vec<String> = domains.into_iter().take(5).map(|(domain, _)| domain).collect();
+    
     let analytics = serde_json::json!({
-        "totalRequests": 0,
-        "successfulRequests": 0,
-        "failedRequests": 0,
-        "avgResponseTime": 0,
-        "dataProcessed": "0 B",
-        "topDomains": []
+        "totalRequests": total_requests,
+        "successfulRequests": successful_requests,
+        "failedRequests": failed_requests,
+        "avgResponseTime": avg_response_time.round() as i64,
+        "dataProcessed": format!("{} KB", (total_requests * 50)), // Rough estimate
+        "topDomains": top_domains
     });
     
     (StatusCode::OK, ResponseJson(analytics))

@@ -12,6 +12,7 @@ import {
 } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
+import Loader from './Loader';
 
 // Modern Color Palette
 const colors = {
@@ -448,12 +449,7 @@ const DashboardHome: React.FC = () => {
   if (loading) {
     return (
       <HomeContainer>
-        <LoadingCard>
-          <div style={{ textAlign: 'center' }}>
-            <FiActivity size={32} style={{ marginBottom: '1rem' }} />
-            <div>Loading dashboard data...</div>
-          </div>
-        </LoadingCard>
+        <Loader text="Loading dashboard data..." subtext="Please wait while we fetch your analytics" />
       </HomeContainer>
     );
   }

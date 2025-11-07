@@ -12,6 +12,7 @@ import {
 } from 'react-icons/fi';
 import { apiService } from '../services/api';
 import { useToast } from './Toast';
+import Loader from './Loader';
 
 // Modern Color Palette
 const colors = {
@@ -477,10 +478,7 @@ const UsageAnalytics: React.FC = () => {
   if (loading) {
     return (
       <AnalyticsContainer>
-        <LoadingState>
-          <div className="spinner"></div>
-          <p>Loading analytics data...</p>
-        </LoadingState>
+        <Loader text="Loading analytics data..." subtext="Gathering your usage statistics" />
       </AnalyticsContainer>
     );
   }
