@@ -92,22 +92,33 @@ interface SecurityAnalysis {
 }
 
 interface SecurityReport {
-  is_https: boolean;
-  mixed_content: boolean;
-  missing_security_headers: string[];
-  insecure_cookies: boolean;
+  isHttps?: boolean;  // camelCase from backend
+  is_https?: boolean;  // snake_case legacy
+  mixedContent?: boolean;
+  mixed_content?: boolean;
+  missingSecurityHeaders?: string[];
+  missing_security_headers?: string[];
+  insecureCookies?: boolean;
+  insecure_cookies?: boolean;
   csp?: string;
-  notes: string[];
+  notes?: string[];
 }
 
 interface PerformanceMetrics {
-  total_load_time_ms: number;
-  dom_ready_time_ms: number;
-  first_paint_ms: number;
-  largest_contentful_paint_ms: number;
-  cumulative_layout_shift: number;
-  total_requests: number;
-  total_size_kb: number;
+  total_load_time_ms?: number;
+  dom_ready_time_ms?: number;
+  first_paint_ms?: number;
+  firstPaint?: number;  // camelCase
+  largest_contentful_paint_ms?: number;
+  cumulative_layout_shift?: number;
+  total_requests?: number;
+  totalResources?: number;
+  total_size_kb?: number;
+  // Add more camelCase fields from backend
+  domContentLoaded?: number;
+  loadComplete?: number;
+  dnsLookup?: number;
+  tcpConnection?: number;
 }
 
 interface ScrapedData {
@@ -117,26 +128,51 @@ interface ScrapedData {
   headings: string[];
   links: LinkInfo[];
   images: ImageInfo[];
-  meta_tags: Record<string, string>;
+  meta_tags?: Record<string, string>;
+  metaTags?: Record<string, string>;  // camelCase
   screenshot?: string;
-  word_count: number;
-  response_time_ms: number;
-  text_content: string;
-  word_frequency: Record<string, number>;
-  reading_time_minutes: number;
-  readability_score: number;
-  language: string;
-  social_media_links: LinkInfo[];
-  page_size_kb: number;
+  word_count?: number;
+  wordCount?: number;  // camelCase
+  response_time_ms?: number;
+  responseTimeMs?: number;  // camelCase
+  text_content?: string;
+  textContent?: string;  // camelCase
+  word_frequency?: Record<string, number>;
+  wordFrequency?: Record<string, number>;  // camelCase
+  reading_time_minutes?: number;
+  readingTimeMinutes?: number;  // camelCase
+  readability_score?: number;
+  readabilityScore?: number;  // camelCase
+  language?: string;
+  social_media_links?: LinkInfo[];
+  socialMediaLinks?: LinkInfo[];  // camelCase
+  page_size_kb?: number;
+  pageSizeKb?: number;  // camelCase
   network_requests?: NetworkRequest[];
+  networkRequests?: NetworkRequest[];  // camelCase
   network_resources?: any[];
+  networkResources?: any[];  // camelCase - IMPORTANT!
   console_logs?: any[];
+  consoleLogs?: any[];  // camelCase - IMPORTANT!
   security_analysis?: SecurityAnalysis;
-  security_report?: SecurityReport;  // Add both for compatibility
+  security_report?: SecurityReport;
+  securityReport?: SecurityReport;  // camelCase - IMPORTANT!
   performance_metrics?: PerformanceMetrics;
-  cookies?: Record<string, string>;
-  response_headers: Record<string, string>;
+  performanceMetrics?: any;  // camelCase
+  cookies?: any[];
+  response_headers?: Record<string, string>;
+  responseHeaders?: Record<string, string>;  // camelCase
   rendered_html?: string;
+  renderedHtml?: string;  // camelCase
+  // NEW FIELDS from advanced scraper
+  forms?: any[];
+  scripts?: any[];
+  stylesheets?: any[];
+  iframes?: any[];
+  technologies?: string[];
+  crawledLinks?: any[];
+  localStorage?: Record<string, string>;
+  sessionStorage?: Record<string, string>;
 }
 
 interface LinkInfo {
@@ -935,6 +971,9 @@ const WebScraper: React.FC = () => {
               <Tab active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>
                 📊 Overview
               </Tab>
+              <Tab active={activeTab === 'screenshot'} onClick={() => setActiveTab('screenshot')}>
+                📸 Screenshot
+              </Tab>
               <Tab active={activeTab === 'content'} onClick={() => setActiveTab('content')}>
                 📝 Content Analysis
               </Tab>
@@ -957,8 +996,13 @@ const WebScraper: React.FC = () => {
                 ⚡ Performance
               </Tab>
               <Tab active={activeTab === 'console'} onClick={() => setActiveTab('console')}>
-                📋 Console ({result.console_logs?.length || 0})
+                📋 Console ({result.console_logs?.length || result.consoleLogs?.length || 0})
               </Tab>
+              {(result.crawledLinks && result.crawledLinks.length > 0) && (
+              <Tab active={activeTab === 'crawled'} onClick={() => setActiveTab('crawled')}>
+                🔍 Crawled Pages ({result.crawledLinks.length})
+              </Tab>
+              )}
             </TabList>
           </TabContainer>
 
@@ -968,6 +1012,29 @@ const WebScraper: React.FC = () => {
                 <SectionTitle>Page Description</SectionTitle>
                 <Description>{result.description || 'No description available'}</Description>
               </Section>
+
+              {result.screenshot && (
+                <Section>
+                  <SectionTitle>Page Preview</SectionTitle>
+                  <div style={{ 
+                    border: `2px solid ${colors.border}`, 
+                    borderRadius: '12px', 
+                    overflow: 'hidden',
+                    maxHeight: '400px',
+                    overflowY: 'auto',
+                    background: colors.backgroundSecondary
+                  }}>
+                    <img 
+                      src={result.screenshot} 
+                      alt="Page screenshot" 
+                      style={{ width: '100%', display: 'block' }}
+                    />
+                  </div>
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: colors.textMuted }}>
+                    Full-page screenshot captured at {new Date().toLocaleTimeString()}
+                  </div>
+                </Section>
+              )}
 
               {result.word_frequency && (
                 <Section>
@@ -1023,6 +1090,64 @@ const WebScraper: React.FC = () => {
                 </Card>
               </GridContainer>
             </>
+          )}
+
+          {activeTab === 'screenshot' && result.screenshot && (
+            <Section>
+              <SectionTitle>Full-Page Screenshot</SectionTitle>
+              <Description>
+                This is a complete screenshot of the entire webpage, including content below the fold.
+                Captured on {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+              </Description>
+              <div style={{ 
+                border: `2px solid ${colors.border}`, 
+                borderRadius: '16px', 
+                overflow: 'hidden',
+                background: colors.backgroundSecondary,
+                boxShadow: colors.shadowLg,
+                marginTop: '1rem'
+              }}>
+                <img 
+                  src={result.screenshot} 
+                  alt="Full page screenshot" 
+                  style={{ width: '100%', display: 'block' }}
+                />
+              </div>
+              <div style={{ 
+                marginTop: '1rem', 
+                padding: '1rem', 
+                background: colors.backgroundSecondary, 
+                borderRadius: '12px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div style={{ fontSize: '0.9rem', color: colors.textSecondary }}>
+                  <strong>Screenshot Details:</strong><br/>
+                  Format: PNG • Type: Full-page capture • Viewport: 1920x1080
+                </div>
+                <button
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = result.screenshot!;
+                    link.download = `screenshot-${new URL(result.url).hostname}-${new Date().toISOString().split('T')[0]}.png`;
+                    link.click();
+                  }}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: colors.primary,
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  💾 Download Screenshot
+                </button>
+              </div>
+            </Section>
           )}
 
           {activeTab === 'content' && (
@@ -1102,6 +1227,147 @@ const WebScraper: React.FC = () => {
             </Section>
           )}
 
+          {activeTab === 'crawled' && result.crawledLinks && result.crawledLinks.length > 0 && (
+            <Section>
+              <SectionTitle>🔍 Crawled Internal Pages</SectionTitle>
+              <div style={{ marginBottom: '1rem', color: '#6b7280', fontSize: '0.9rem' }}>
+                Automatically discovered and analyzed {result.crawledLinks.length} internal page(s)
+              </div>
+              
+              <div style={{ display: 'grid', gap: '2rem' }}>
+                {result.crawledLinks.map((link: any, index: number) => {
+                  const hasScreenshot = link.screenshot && link.screenshot.startsWith('data:image');
+                  
+                  return (
+                    <div key={index} style={{
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '12px',
+                      padding: '1.5rem',
+                      backgroundColor: '#ffffff'
+                    }}>
+                      {/* Header */}
+                      <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #e5e7eb' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                          <h4 style={{ margin: 0, color: '#1e1e1e', fontSize: '1.1rem', flex: 1 }}>
+                            {link.title || 'Untitled Page'}
+                          </h4>
+                          {link.status && (
+                            <span style={{
+                              padding: '0.25rem 0.75rem',
+                              borderRadius: '6px',
+                              fontSize: '0.85rem',
+                              fontWeight: '600',
+                              backgroundColor: link.status === 200 ? '#dcfce7' : '#fee2e2',
+                              color: link.status === 200 ? '#166534' : '#991b1b'
+                            }}>
+                              {link.status} {link.statusText || ''}
+                            </span>
+                          )}
+                        </div>
+                        <a href={link.url} target="_blank" rel="noopener noreferrer" style={{
+                          color: '#4f46e5',
+                          fontSize: '0.9rem',
+                          textDecoration: 'none',
+                          wordBreak: 'break-all'
+                        }}>
+                          {link.url}
+                        </a>
+                      </div>
+
+                      {/* Metrics */}
+                      <MetricsRow style={{ marginBottom: '1rem' }}>
+                        {link.wordCount && (
+                          <MetricCard>
+                            <MetricValue>{link.wordCount}</MetricValue>
+                            <MetricLabel>Words</MetricLabel>
+                          </MetricCard>
+                        )}
+                        {link.loadTimeMs && (
+                          <MetricCard>
+                            <MetricValue>{link.loadTimeMs}ms</MetricValue>
+                            <MetricLabel>Load Time</MetricLabel>
+                          </MetricCard>
+                        )}
+                        {link.contentType && (
+                          <MetricCard>
+                            <MetricValue style={{ fontSize: '0.8rem' }}>{link.contentType.split(';')[0]}</MetricValue>
+                            <MetricLabel>Content Type</MetricLabel>
+                          </MetricCard>
+                        )}
+                        {link.isHttps !== undefined && (
+                          <MetricCard>
+                            <MetricValue>{link.isHttps ? '🔒' : '⚠️'}</MetricValue>
+                            <MetricLabel>{link.isHttps ? 'HTTPS' : 'HTTP'}</MetricLabel>
+                          </MetricCard>
+                        )}
+                      </MetricsRow>
+
+                      {/* Description */}
+                      {link.description && (
+                        <div style={{ marginBottom: '1rem' }}>
+                          <strong style={{ color: '#1e1e1e', display: 'block', marginBottom: '0.5rem' }}>Description:</strong>
+                          <p style={{ margin: 0, color: '#6b7280', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                            {link.description}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* H1 Tags */}
+                      {link.h1Tags && link.h1Tags.length > 0 && (
+                        <div style={{ marginBottom: '1rem' }}>
+                          <strong style={{ color: '#1e1e1e', display: 'block', marginBottom: '0.5rem' }}>
+                            H1 Headings ({link.h1Tags.length}):
+                          </strong>
+                          <ListContainer>
+                            {link.h1Tags.map((h1: string, h1Index: number) => (
+                              <ListItem key={h1Index} style={{ fontSize: '0.9rem' }}>{h1}</ListItem>
+                            ))}
+                          </ListContainer>
+                        </div>
+                      )}
+
+                      {/* Screenshot */}
+                      {hasScreenshot && (
+                        <div style={{ marginTop: '1rem' }}>
+                          <strong style={{ color: '#1e1e1e', display: 'block', marginBottom: '0.75rem' }}>
+                            📸 Page Screenshot:
+                          </strong>
+                          <div style={{
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            maxHeight: '400px',
+                            overflowY: 'auto'
+                          }}>
+                            <img 
+                              src={link.screenshot} 
+                              alt={`Screenshot of ${link.title}`}
+                              style={{ width: '100%', display: 'block' }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Error */}
+                      {link.error && (
+                        <div style={{
+                          padding: '0.75rem 1rem',
+                          backgroundColor: '#fee2e2',
+                          border: '1px solid #fecaca',
+                          borderRadius: '8px',
+                          color: '#991b1b',
+                          fontSize: '0.9rem'
+                        }}>
+                          <strong>Error:</strong> {link.error}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </Section>
+          )}
+
           {activeTab === 'seo' && (
             <Section>
               <SectionTitle>SEO & Meta Information</SectionTitle>
@@ -1120,51 +1386,97 @@ const WebScraper: React.FC = () => {
             </Section>
           )}
 
-          {activeTab === 'network' && result.network_requests && (
+          {activeTab === 'network' && (result.network_requests || result.networkResources || result.network_resources) && (() => {
+            // Support both snake_case and camelCase
+            const networkData = result.networkResources || result.network_resources || result.network_requests || [];
+            
+            return (
             <Section>
-              <SectionTitle>Network Requests Analysis</SectionTitle>
-              {result.network_requests.length > 0 ? (
+              <SectionTitle>🌐 Network Requests Analysis</SectionTitle>
+              {networkData.length > 0 ? (
                 <div>
                   <div style={{ marginBottom: '1rem' }}>
                     <MetricsRow>
                       <MetricCard>
-                        <MetricValue>{result.network_requests.length}</MetricValue>
+                        <MetricValue>{networkData.length}</MetricValue>
                         <MetricLabel>Total Requests</MetricLabel>
                       </MetricCard>
                       <MetricCard>
-                        <MetricValue>{(result.network_requests.reduce((sum, req) => sum + req.size_bytes, 0) / 1024).toFixed(1)}KB</MetricValue>
+                        <MetricValue>
+                          {(networkData.reduce((sum: number, req: any) => sum + (req.transferSize || req.size_bytes || 0), 0) / 1024).toFixed(1)}KB
+                        </MetricValue>
                         <MetricLabel>Total Size</MetricLabel>
                       </MetricCard>
                       <MetricCard>
-                        <MetricValue>{result.network_requests.filter(req => req.status >= 400).length}</MetricValue>
+                        <MetricValue>{networkData.filter((req: any) => (req.status || 0) >= 400).length}</MetricValue>
                         <MetricLabel>Failed Requests</MetricLabel>
+                      </MetricCard>
+                      <MetricCard>
+                        <MetricValue>{networkData.filter((req: any) => req.from_cache || req.cached).length}</MetricValue>
+                        <MetricLabel>From Cache</MetricLabel>
                       </MetricCard>
                     </MetricsRow>
                   </div>
                   <ListContainer>
-                    {result.network_requests.map((request, index) => (
-                      <ListItem key={index} style={{ borderLeft: `3px solid ${request.status >= 400 ? '#ef4444' : request.status >= 300 ? '#f59e0b' : '#10b981'}` }}>
+                    {networkData.map((request: any, index: number) => {
+                      const url = request.url || request.name || '';
+                      const method = request.method || 'GET';
+                      const status = request.status || 0;
+                      const statusText = request.statusText || request.status_text || '';
+                      const resourceType = request.resource_type || request.initiatorType || 'other';
+                      const contentType = request.content_type || request.mimeType || '';
+                      const sizeBytes = request.size_bytes || request.transferSize || 0;
+                      const timeMs = request.response_time_ms || request.durationMs || 0;
+                      const fromCache = request.from_cache ?? request.cached ?? false;
+                      const headers = request.headers || request.responseHeaders || {};
+                      
+                      return (
+                      <ListItem key={index} style={{ borderLeft: `3px solid ${status >= 400 ? '#ef4444' : status >= 300 ? '#f59e0b' : '#10b981'}`, padding: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                          <strong style={{ color: '#1e1e1e', flex: 1, marginRight: '1rem' }}>{request.method} {request.url}</strong>
+                          <strong style={{ color: '#1e1e1e', flex: 1, marginRight: '1rem', wordBreak: 'break-all' }}>
+                            {method} {url}
+                          </strong>
+                          {status > 0 && (
                           <span style={{ 
-                            color: request.status >= 400 ? '#ef4444' : request.status >= 300 ? '#f59e0b' : '#10b981',
+                            color: status >= 400 ? '#ef4444' : status >= 300 ? '#f59e0b' : '#10b981',
                             fontWeight: 'bold',
-                            fontSize: '0.9rem'
+                            fontSize: '0.9rem',
+                            minWidth: '60px',
+                            textAlign: 'right'
                           }}>
-                            {request.status}
+                            {status} {statusText}
                           </span>
+                          )}
                         </div>
                         <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>
-                          <div>Type: {request.content_type}</div>
-                          <div>Size: {(request.size_bytes / 1024).toFixed(2)}KB</div>
-                          <div>Time: {request.response_time_ms}ms</div>
-                          {Object.keys(request.headers).length > 0 && (
-                            <details style={{ marginTop: '0.5rem' }}>
-                              <summary style={{ cursor: 'pointer', color: '#4f46e5' }}>Headers ({Object.keys(request.headers).length})</summary>
-                              <div style={{ marginTop: '0.5rem', paddingLeft: '1rem' }}>
-                                {Object.entries(request.headers).map(([key, value]) => (
-                                  <div key={key} style={{ marginBottom: '0.25rem' }}>
-                                    <strong>{key}:</strong> {value}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem', marginTop: '0.5rem' }}>
+                            <div><strong>Type:</strong> {resourceType}</div>
+                            <div><strong>Content-Type:</strong> {contentType}</div>
+                            <div><strong>Size:</strong> {(sizeBytes / 1024).toFixed(2)}KB</div>
+                            <div><strong>Time:</strong> {timeMs}ms</div>
+                            <div><strong>Cached:</strong> {fromCache ? '✅ Yes' : '❌ No'}</div>
+                            {request.remote_address || request.remoteAddress ? (
+                              <div><strong>IP:</strong> {request.remoteAddress || request.remote_address}</div>
+                            ) : null}
+                          </div>
+                          {headers && Object.keys(headers).length > 0 && (
+                            <details style={{ marginTop: '0.75rem' }}>
+                              <summary style={{ cursor: 'pointer', color: '#4f46e5', fontWeight: '600' }}>
+                                📋 Headers ({Object.keys(headers).length})
+                              </summary>
+                              <div style={{ 
+                                marginTop: '0.5rem', 
+                                paddingLeft: '1rem',
+                                background: '#f8fafc',
+                                borderRadius: '8px',
+                                padding: '0.75rem',
+                                maxHeight: '200px',
+                                overflowY: 'auto'
+                              }}>
+                                {Object.entries(headers).map(([key, value]) => (
+                                  <div key={key} style={{ marginBottom: '0.25rem', fontSize: '0.8rem' }}>
+                                    <strong style={{ color: '#475569' }}>{key}:</strong> 
+                                    <span style={{ marginLeft: '0.5rem', color: '#64748b' }}>{String(value)}</span>
                                   </div>
                                 ))}
                               </div>
@@ -1172,63 +1484,76 @@ const WebScraper: React.FC = () => {
                           )}
                         </div>
                       </ListItem>
-                    ))}
+                      );
+                    })}
                   </ListContainer>
                 </div>
               ) : (
                 <Description>No network requests captured</Description>
               )}
             </Section>
-          )}
+            );
+          })()}
 
-          {activeTab === 'security' && (result.security_analysis || result.security_report) && (
+          {activeTab === 'security' && (result.security_analysis || result.security_report || result.securityReport) && (
             <Section delay={0.1}>
               <ResultSectionTitle>🔒 Security Analysis</ResultSectionTitle>
               <div style={{ marginBottom: '1.5rem' }}>
-                {/* Handle both SecurityAnalysis and SecurityReport formats */}
-                {result.security_report && (
+                {/* Handle both SecurityAnalysis and SecurityReport formats - support both snake_case and camelCase */}
+                {(() => {
+                  const security = result.securityReport || result.security_report;
+                  if (!security) return null;
+                  
+                  const isHttps = security.isHttps ?? security.is_https ?? false;
+                  const insecureCookies = security.insecureCookies ?? security.insecure_cookies ?? false;
+                  const mixedContent = security.mixedContent ?? security.mixed_content ?? false;
+                  const missingHeaders = security.missingSecurityHeaders || security.missing_security_headers || [];
+                  const csp = security.csp;
+                  const notes = security.notes || [];
+                  
+                  return (
                   <>
                     <div style={{ 
                       display: 'inline-flex', 
                       alignItems: 'center', 
                       padding: '0.75rem 1.25rem', 
                       borderRadius: '12px',
-                      backgroundColor: result.security_report.is_https && !result.security_report.insecure_cookies && !result.security_report.mixed_content ? '#dcfce7' : 
-                                      result.security_report.is_https ? '#fef3c7' : '#fee2e2',
-                      color: result.security_report.is_https && !result.security_report.insecure_cookies && !result.security_report.mixed_content ? '#166534' : 
-                             result.security_report.is_https ? '#92400e' : '#991b1b',
+                      backgroundColor: isHttps && !insecureCookies && !mixedContent ? '#dcfce7' : 
+                                      isHttps ? '#fef3c7' : '#fee2e2',
+                      color: isHttps && !insecureCookies && !mixedContent ? '#166534' : 
+                             isHttps ? '#92400e' : '#991b1b',
                       fontWeight: '600',
                       marginBottom: '1.5rem',
                       fontSize: '1rem'
                     }}>
-                      {result.security_report.is_https && !result.security_report.insecure_cookies && !result.security_report.mixed_content ? '🟢 Good Security' : 
-                       result.security_report.is_https ? '🟡 Moderate Security' : '🔴 Poor Security'} 
+                      {isHttps && !insecureCookies && !mixedContent ? '🟢 Good Security' : 
+                       isHttps ? '🟡 Moderate Security' : '🔴 Poor Security'} 
                     </div>
 
                     <MetricsRow>
                       <MetricCard>
-                        <MetricValue>{result.security_report.is_https ? '✅' : '❌'}</MetricValue>
+                        <MetricValue>{isHttps ? '✅' : '❌'}</MetricValue>
                         <MetricLabel>HTTPS</MetricLabel>
                       </MetricCard>
                       <MetricCard>
-                        <MetricValue>{!result.security_report.insecure_cookies ? '✅' : '❌'}</MetricValue>
+                        <MetricValue>{!insecureCookies ? '✅' : '❌'}</MetricValue>
                         <MetricLabel>Secure Cookies</MetricLabel>
                       </MetricCard>
                       <MetricCard>
-                        <MetricValue>{!result.security_report.mixed_content ? '✅' : '❌'}</MetricValue>
+                        <MetricValue>{!mixedContent ? '✅' : '❌'}</MetricValue>
                         <MetricLabel>No Mixed Content</MetricLabel>
                       </MetricCard>
                       <MetricCard>
-                        <MetricValue>{result.security_report.missing_security_headers.length === 0 ? '✅' : '⚠️'}</MetricValue>
+                        <MetricValue>{missingHeaders.length === 0 ? '✅' : '⚠️'}</MetricValue>
                         <MetricLabel>Security Headers</MetricLabel>
                       </MetricCard>
                     </MetricsRow>
 
-                    {result.security_report.missing_security_headers && result.security_report.missing_security_headers.length > 0 && (
+                    {missingHeaders.length > 0 && (
                       <div style={{ marginBottom: '1.5rem', marginTop: '1.5rem' }}>
-                        <h4 style={{ margin: '0 0 0.75rem 0', color: colors.textPrimary }}>Missing Security Headers ({result.security_report.missing_security_headers.length})</h4>
+                        <h4 style={{ margin: '0 0 0.75rem 0', color: colors.textPrimary }}>Missing Security Headers ({missingHeaders.length})</h4>
                         <ListContainer>
-                          {result.security_report.missing_security_headers.map((header, index) => (
+                          {missingHeaders.map((header: string, index: number) => (
                             <ListItem key={index}>
                               <span style={{ color: colors.warning }}>⚠️</span> {header}
                             </ListItem>
@@ -1237,22 +1562,22 @@ const WebScraper: React.FC = () => {
                       </div>
                     )}
 
-                    {result.security_report.csp && (
+                    {csp && (
                       <div style={{ marginBottom: '1.5rem' }}>
                         <h4 style={{ margin: '0 0 0.75rem 0', color: colors.textPrimary }}>Content Security Policy</h4>
                         <ListContainer>
                           <ListItem style={{ wordBreak: 'break-all' }}>
-                            {result.security_report.csp}
+                            {csp}
                           </ListItem>
                         </ListContainer>
                       </div>
                     )}
 
-                    {result.security_report.notes && result.security_report.notes.length > 0 && (
+                    {notes.length > 0 && (
                       <div style={{ marginBottom: '1.5rem' }}>
-                        <h4 style={{ margin: '0 0 0.75rem 0', color: colors.textPrimary }}>Security Notes ({result.security_report.notes.length})</h4>
+                        <h4 style={{ margin: '0 0 0.75rem 0', color: colors.textPrimary }}>Security Notes ({notes.length})</h4>
                         <ListContainer>
-                          {result.security_report.notes.map((note, index) => (
+                          {notes.map((note: string, index: number) => (
                             <ListItem key={index}>
                               <span style={{ color: colors.info }}>ℹ️</span> {note}
                             </ListItem>
@@ -1261,10 +1586,11 @@ const WebScraper: React.FC = () => {
                       </div>
                     )}
                   </>
-                )}
+                  );
+                })()}
 
                 {/* Fallback to old format if security_analysis exists */}
-                {result.security_analysis && !result.security_report && (
+                {result.security_analysis && !result.security_report && !result.securityReport && (
                   <>
                     <div style={{ 
                       display: 'inline-flex', 
@@ -1347,78 +1673,129 @@ const WebScraper: React.FC = () => {
             </Section>
           )}
 
-          {activeTab === 'performance' && result.performance_metrics && (
+          {activeTab === 'performance' && (result.performance_metrics || result.performanceMetrics) && (() => {
+            // Support both snake_case and camelCase
+            const perf = result.performanceMetrics || result.performance_metrics || {};
+            
+            // Extract values with fallbacks
+            const totalLoadTime = perf.loadComplete || perf.total_load_time_ms || 0;
+            const domReady = perf.domContentLoaded || perf.dom_ready_time_ms || 0;
+            const firstPaint = perf.firstPaint || perf.first_paint_ms || 0;
+            const firstContentfulPaint = perf.firstContentfulPaint || perf.largest_contentful_paint_ms || 0;
+            const cls = perf.cumulative_layout_shift || 0;
+            const totalRequests = perf.totalResources || perf.total_requests || 0;
+            const totalSize = (perf.transferSize || perf.total_size_kb || 0) / 1024;
+            const dnsLookup = perf.dnsLookup || perf.dns_lookup_ms || 0;
+            const tcpConnection = perf.tcpConnection || perf.tcp_connection_ms || 0;
+            const tlsNegotiation = perf.tlsNegotiation || 0;
+            const requestTime = perf.requestTime || 0;
+            const responseTime = perf.responseTime || 0;
+            
+            return (
             <Section>
-              <SectionTitle>Performance Metrics</SectionTitle>
+              <SectionTitle>⚡ Performance Metrics</SectionTitle>
               <MetricsRow>
                 <MetricCard>
-                  <MetricValue>{result.performance_metrics.total_load_time_ms}ms</MetricValue>
+                  <MetricValue>{totalLoadTime ? `${totalLoadTime.toFixed(0)}ms` : 'N/A'}</MetricValue>
                   <MetricLabel>Total Load Time</MetricLabel>
                 </MetricCard>
                 <MetricCard>
-                  <MetricValue>{result.performance_metrics.dom_ready_time_ms}ms</MetricValue>
+                  <MetricValue>{domReady ? `${domReady.toFixed(0)}ms` : 'N/A'}</MetricValue>
                   <MetricLabel>DOM Ready</MetricLabel>
                 </MetricCard>
                 <MetricCard>
-                  <MetricValue>{result.performance_metrics.first_paint_ms}ms</MetricValue>
+                  <MetricValue>{firstPaint ? `${firstPaint.toFixed(0)}ms` : 'N/A'}</MetricValue>
                   <MetricLabel>First Paint</MetricLabel>
                 </MetricCard>
                 <MetricCard>
-                  <MetricValue>{result.performance_metrics.largest_contentful_paint_ms}ms</MetricValue>
-                  <MetricLabel>LCP</MetricLabel>
+                  <MetricValue>{firstContentfulPaint ? `${firstContentfulPaint.toFixed(0)}ms` : 'N/A'}</MetricValue>
+                  <MetricLabel>First Contentful Paint</MetricLabel>
                 </MetricCard>
               </MetricsRow>
               <MetricsRow>
                 <MetricCard>
-                  <MetricValue>{result.performance_metrics.cumulative_layout_shift.toFixed(3)}</MetricValue>
-                  <MetricLabel>CLS Score</MetricLabel>
+                  <MetricValue>{dnsLookup ? `${dnsLookup.toFixed(0)}ms` : 'N/A'}</MetricValue>
+                  <MetricLabel>DNS Lookup</MetricLabel>
                 </MetricCard>
                 <MetricCard>
-                  <MetricValue>{result.performance_metrics.total_requests}</MetricValue>
+                  <MetricValue>{tcpConnection ? `${tcpConnection.toFixed(0)}ms` : 'N/A'}</MetricValue>
+                  <MetricLabel>TCP Connection</MetricLabel>
+                </MetricCard>
+                <MetricCard>
+                  <MetricValue>{totalRequests}</MetricValue>
                   <MetricLabel>Total Requests</MetricLabel>
                 </MetricCard>
                 <MetricCard>
-                  <MetricValue>{result.performance_metrics.total_size_kb.toFixed(1)}KB</MetricValue>
+                  <MetricValue>{totalSize ? `${totalSize.toFixed(1)}KB` : 'N/A'}</MetricValue>
                   <MetricLabel>Total Size</MetricLabel>
                 </MetricCard>
+              </MetricsRow>
+              
+              {(tlsNegotiation > 0 || requestTime > 0 || responseTime > 0) && (
+              <MetricsRow>
+                {tlsNegotiation > 0 && (
+                <MetricCard>
+                  <MetricValue>{tlsNegotiation.toFixed(0)}ms</MetricValue>
+                  <MetricLabel>TLS Negotiation</MetricLabel>
+                </MetricCard>
+                )}
+                {requestTime > 0 && (
+                <MetricCard>
+                  <MetricValue>{requestTime.toFixed(0)}ms</MetricValue>
+                  <MetricLabel>Request Time</MetricLabel>
+                </MetricCard>
+                )}
+                {responseTime > 0 && (
+                <MetricCard>
+                  <MetricValue>{responseTime.toFixed(0)}ms</MetricValue>
+                  <MetricLabel>Response Time</MetricLabel>
+                </MetricCard>
+                )}
                 <MetricCard>
                   <MetricValue>
-                    {result.performance_metrics.first_paint_ms < 1000 ? '🟢' : 
-                     result.performance_metrics.first_paint_ms < 2500 ? '🟡' : '🔴'}
+                    {firstPaint < 1000 ? '🟢' : firstPaint < 2500 ? '🟡' : '🔴'}
                   </MetricValue>
                   <MetricLabel>Performance</MetricLabel>
                 </MetricCard>
               </MetricsRow>
+              )}
               
               <div style={{ marginTop: '1.5rem' }}>
                 <h4 style={{ margin: '0 0 0.75rem 0', color: '#1e1e1e' }}>Performance Insights</h4>
                 <ListContainer>
+                  {totalLoadTime > 0 && (
                   <ListItem>
                     <strong>Load Time Assessment:</strong> {
-                      result.performance_metrics.total_load_time_ms < 2000 ? 'Excellent - Very fast loading' :
-                      result.performance_metrics.total_load_time_ms < 4000 ? 'Good - Acceptable loading speed' :
-                      result.performance_metrics.total_load_time_ms < 8000 ? 'Average - Could be improved' :
-                      'Poor - Significant optimization needed'
+                      totalLoadTime < 2000 ? '🟢 Excellent - Very fast loading' :
+                      totalLoadTime < 4000 ? '🟡 Good - Acceptable loading speed' :
+                      totalLoadTime < 8000 ? '🟠 Average - Could be improved' :
+                      '🔴 Poor - Significant optimization needed'
                     }
                   </ListItem>
-                  <ListItem>
-                    <strong>CLS Assessment:</strong> {
-                      result.performance_metrics.cumulative_layout_shift < 0.1 ? 'Excellent - Minimal layout shifts' :
-                      result.performance_metrics.cumulative_layout_shift < 0.25 ? 'Good - Some layout shifts' :
-                      'Poor - Significant layout instability'
-                    }
-                  </ListItem>
+                  )}
+                  {totalRequests > 0 && (
                   <ListItem>
                     <strong>Request Efficiency:</strong> {
-                      result.performance_metrics.total_requests < 50 ? 'Excellent - Minimal requests' :
-                      result.performance_metrics.total_requests < 100 ? 'Good - Reasonable request count' :
-                      'Poor - Too many requests, consider optimization'
+                      totalRequests < 50 ? '🟢 Excellent - Minimal requests' :
+                      totalRequests < 100 ? '🟡 Good - Reasonable request count' :
+                      '🔴 Poor - Too many requests, consider optimization'
                     }
                   </ListItem>
+                  )}
+                  {firstPaint > 0 && (
+                  <ListItem>
+                    <strong>First Paint:</strong> {
+                      firstPaint < 1000 ? '🟢 Excellent - Under 1 second' :
+                      firstPaint < 2500 ? '🟡 Good - Under 2.5 seconds' :
+                      '🔴 Poor - Over 2.5 seconds'
+                    }
+                  </ListItem>
+                  )}
                 </ListContainer>
               </div>
             </Section>
-          )}
+            );
+          })()}
 
           {activeTab === 'console' && result.console_logs && (
             <Section>
@@ -1429,16 +1806,34 @@ const WebScraper: React.FC = () => {
                     Captured {result.console_logs.length} console message(s) during page load
                   </div>
                   <ListContainer>
-                    {result.console_logs.map((log, index) => (
-                      <ListItem key={index} style={{ 
-                        fontFamily: 'Monaco, Consolas, "Courier New", monospace',
-                        backgroundColor: '#f8fafc',
-                        borderLeft: `3px solid ${log.includes('Error') || log.includes('error') ? '#ef4444' : 
-                                                 log.includes('Warning') || log.includes('warn') ? '#f59e0b' : '#10b981'}`
-                      }}>
-                        {log}
-                      </ListItem>
-                    ))}
+                    {result.console_logs.map((log: any, index: number) => {
+                      const logText = typeof log === 'string' ? log : log.message;
+                      const logLevel = typeof log === 'string' ? 'log' : log.level;
+                      const isError = logLevel === 'error' || logText.toLowerCase().includes('error');
+                      const isWarning = logLevel === 'warning' || logLevel === 'warn' || logText.toLowerCase().includes('warning');
+                      
+                      return (
+                        <ListItem key={index} style={{ 
+                          fontFamily: 'Monaco, Consolas, "Courier New", monospace',
+                          backgroundColor: '#f8fafc',
+                          borderLeft: `3px solid ${isError ? '#ef4444' : isWarning ? '#f59e0b' : '#10b981'}`,
+                          padding: '0.75rem 1rem'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                            <span style={{ 
+                              fontSize: '0.75rem', 
+                              fontWeight: 'bold',
+                              color: isError ? '#ef4444' : isWarning ? '#f59e0b' : '#10b981',
+                              textTransform: 'uppercase',
+                              minWidth: '60px'
+                            }}>
+                              {logLevel}
+                            </span>
+                            <span style={{ flex: 1, fontSize: '0.85rem', color: '#1e293b' }}>{logText}</span>
+                          </div>
+                        </ListItem>
+                      );
+                    })}
                   </ListContainer>
                 </div>
               ) : (
@@ -1447,7 +1842,7 @@ const WebScraper: React.FC = () => {
               
               {result.cookies && Object.keys(result.cookies).length > 0 && (
                 <div style={{ marginTop: '2rem' }}>
-                  <h4 style={{ margin: '0 0 0.75rem 0', color: '#1e1e1e' }}>Cookies ({Object.keys(result.cookies).length})</h4>
+                  <h4 style={{ margin: '0 0 0.75rem 0', color: '#1e1e1e' }}>🍪 Cookies ({Object.keys(result.cookies).length})</h4>
                   <ListContainer>
                     {Object.entries(result.cookies).map(([name, value]) => (
                       <ListItem key={name} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
@@ -1461,7 +1856,7 @@ const WebScraper: React.FC = () => {
 
               {result.response_headers && Object.keys(result.response_headers).length > 0 && (
                 <div style={{ marginTop: '2rem' }}>
-                  <h4 style={{ margin: '0 0 0.75rem 0', color: '#1e1e1e' }}>Response Headers</h4>
+                  <h4 style={{ margin: '0 0 0.75rem 0', color: '#1e1e1e' }}>📋 Response Headers ({Object.keys(result.response_headers).length})</h4>
                   <ListContainer>
                     {Object.entries(result.response_headers).map(([header, value]) => (
                       <ListItem key={header} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>

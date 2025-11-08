@@ -85,6 +85,52 @@ export class DatabaseConnection {
     };
   }
 
+  async incrementApiKeyUsage(apiKeyId: ObjectId): Promise<void> {
+    await this.apiKeysCollection().updateOne(
+      { _id: apiKeyId },
+      { 
+        $inc: { requestsCount: 1 },
+        $set: { lastUsedAt: new Date() }
+      }
+    );
+  }
+
+  async getDailyUsageStats(userId: ObjectId, days: number = 30): Promise<any[]> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    const logs = await this.usageLogsCollection()
+      .find({
+        userId,
+        timestamp: { $gte: cutoffDate }
+      })
+      .sort({ timestamp: 1 })
+      .toArray();
+
+    // Group by date
+    const dailyStats: { [key: string]: { requests: number; successCount: number; totalResponseTime: number } } = {};
+    
+    logs.forEach(log => {
+      const dateKey = log.timestamp.toISOString().split('T')[0];
+      if (!dailyStats[dateKey]) {
+        dailyStats[dateKey] = { requests: 0, successCount: 0, totalResponseTime: 0 };
+      }
+      dailyStats[dateKey].requests++;
+      if (log.success) {
+        dailyStats[dateKey].successCount++;
+      }
+      dailyStats[dateKey].totalResponseTime += log.responseTimeMs;
+    });
+
+    // Convert to array format
+    return Object.entries(dailyStats).map(([date, stats]) => ({
+      date,
+      requests: stats.requests,
+      success_count: stats.successCount,
+      avg_response_time: stats.requests > 0 ? Math.round(stats.totalResponseTime / stats.requests) : 0
+    }));
+  }
+
   async close(): Promise<void> {
     await this.client.close();
   }
