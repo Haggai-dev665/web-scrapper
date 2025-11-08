@@ -104,10 +104,11 @@ async function setupRoutes() {
   app.use(express.static(frontendPath, { maxAge: '1d' }));
 
   // Serve index.html for SPA routes (frontend routes)
-  app.get('*', (_req: Request, res: Response) => {
+  app.get('*', (_req: Request, res: Response): void => {
     // Don't serve index.html for API routes
     if (_req.path.startsWith('/api/')) {
-      return res.status(404).json({ error: 'API endpoint not found' });
+      res.status(404).json({ error: 'API endpoint not found' });
+      return;
     }
     
     const indexPath = path.join(frontendPath, 'index.html');

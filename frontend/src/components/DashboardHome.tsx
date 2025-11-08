@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import Loader from './Loader';
+import { animations } from '../theme/animations';
 
 // Modern Color Palette
 const colors = {
@@ -115,6 +116,7 @@ const StatCard = styled.div`
   box-shadow: ${colors.shadowLg};
   border: 1px solid ${colors.border};
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  ${animations.fadeInUp('0.3s')}
   
   &:hover {
     transform: translateY(-4px);
@@ -309,11 +311,16 @@ const ActionCard = styled.button`
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
   box-shadow: ${colors.shadowMd};
+  ${animations.fadeInUp('0.4s')}
   
   &:hover {
     transform: translateY(-4px);
     box-shadow: ${colors.shadowLg};
     border-color: ${colors.primary};
+  }
+  
+  &:active {
+    transform: translateY(-2px);
   }
 `;
 

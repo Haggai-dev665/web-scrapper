@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import { useToast } from './Toast';
+import { animations } from '../theme/animations';
 
 // Color Palette matching landing page
 const colors = {
@@ -94,9 +95,10 @@ const StatCard = styled.div`
   border: 1px solid rgba(123, 104, 238, 0.2);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
+  ${animations.fadeInUp('0.3s')}
   
   &:hover {
-    transform: translateY(-2px);
+    transform: translateY(-4px);
     box-shadow: 0 12px 40px rgba(123, 104, 238, 0.2);
   }
 `;
@@ -125,10 +127,12 @@ const KeyCard = styled.div`
   border-radius: 12px;
   padding: 1.5rem;
   transition: all 0.3s ease;
+  ${animations.fadeInUp('0.3s')}
   
   &:hover {
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
     border-color: #3b82f6;
+    transform: translateY(-2px);
   }
 `;
 
