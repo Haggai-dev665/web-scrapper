@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import Loader from './Loader';
+import AnimateOnScroll from './AnimateOnScroll';
 
 // Modern Color Palette
 const colors = {
@@ -138,12 +139,17 @@ const StatCard = styled.div`
   border-radius: 20px;
   box-shadow: ${colors.shadowLg};
   border: 1px solid ${colors.border};
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
   
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-6px);
     box-shadow: ${colors.shadowLg}, 0 0 0 1px ${colors.primary}20;
     border-color: ${colors.primary}30;
+  }
+  
+  &:active {
+    transform: translateY(-2px);
   }
 `;
 
@@ -339,14 +345,41 @@ const ActionCard = styled.button`
   padding: 2rem;
   border-radius: 20px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
   box-shadow: ${colors.shadowMd};
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, ${colors.primary}10 0%, ${colors.primaryLight}10 100%);
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
   
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-6px);
     box-shadow: ${colors.shadowLg};
     border-color: ${colors.primary};
+    
+    &::before {
+      opacity: 1;
+    }
+  }
+  
+  &:active {
+    transform: translateY(-2px);
+  }
+  
+  & > * {
+    position: relative;
+    z-index: 1;
   }
 `;
 
@@ -533,154 +566,174 @@ const DashboardHome: React.FC = () => {
 
   return (
     <HomeContainer>
-      <WelcomeSection>
-        <WelcomeContent>
-          <WelcomeTitle>Welcome back, {user?.first_name}!</WelcomeTitle>
-          <WelcomeSubtitle>
-            Here's what's happening with your web scraping operations today.
-          </WelcomeSubtitle>
-        </WelcomeContent>
-      </WelcomeSection>
+      <AnimateOnScroll delay={0.1}>
+        <WelcomeSection>
+          <WelcomeContent>
+            <WelcomeTitle>Welcome back, {user?.first_name}!</WelcomeTitle>
+            <WelcomeSubtitle>
+              Here's what's happening with your web scraping operations today.
+            </WelcomeSubtitle>
+          </WelcomeContent>
+        </WelcomeSection>
+      </AnimateOnScroll>
 
       <StatsGrid>
-        <StatCard>
-          <StatHeader>
-            <StatTitle>Total Requests</StatTitle>
-            <StatIcon color={colors.primary}>
-              <FiActivity />
-            </StatIcon>
-          </StatHeader>
-          <StatValue>{stats.totalRequests.toLocaleString()}</StatValue>
-          <StatChange positive>
-            <FiTrendingUp />
-            This month
-          </StatChange>
-        </StatCard>
-
-        <StatCard>
-          <StatHeader>
-            <StatTitle>Active API Keys</StatTitle>
-            <StatIcon color={colors.info}>
-              <FiKey />
-            </StatIcon>
-          </StatHeader>
-          <StatValue>{stats.activeKeys}</StatValue>
-          <StatChange positive>
-            <FiTrendingUp />
-            Available keys
-          </StatChange>
-        </StatCard>
-
-        <StatCard>
-          <StatHeader>
-            <StatTitle>Success Rate</StatTitle>
-            <StatIcon color={colors.success}>
+        <AnimateOnScroll delay={0.2}>
+          <StatCard>
+            <StatHeader>
+              <StatTitle>Total Requests</StatTitle>
+              <StatIcon color={colors.primary}>
+                <FiActivity />
+              </StatIcon>
+            </StatHeader>
+            <StatValue>{stats.totalRequests.toLocaleString()}</StatValue>
+            <StatChange positive>
               <FiTrendingUp />
-            </StatIcon>
-          </StatHeader>
-          <StatValue>{stats.successRate.toFixed(1)}%</StatValue>
-          <StatChange positive>
-            <FiTrendingUp />
-            Overall performance
-          </StatChange>
-        </StatCard>
+              This month
+            </StatChange>
+          </StatCard>
+        </AnimateOnScroll>
 
-        <StatCard>
-          <StatHeader>
-            <StatTitle>Avg Response Time</StatTitle>
-            <StatIcon color={colors.warning}>
-              <FiClock />
-            </StatIcon>
-          </StatHeader>
-          <StatValue>{Math.round(stats.avgResponseTime)}ms</StatValue>
-          <StatChange positive>
-            <FiTrendingUp />
-            Average speed
-          </StatChange>
-        </StatCard>
+        <AnimateOnScroll delay={0.3}>
+          <StatCard>
+            <StatHeader>
+              <StatTitle>Active API Keys</StatTitle>
+              <StatIcon color={colors.info}>
+                <FiKey />
+              </StatIcon>
+            </StatHeader>
+            <StatValue>{stats.activeKeys}</StatValue>
+            <StatChange positive>
+              <FiTrendingUp />
+              Available keys
+            </StatChange>
+          </StatCard>
+        </AnimateOnScroll>
+
+        <AnimateOnScroll delay={0.4}>
+          <StatCard>
+            <StatHeader>
+              <StatTitle>Success Rate</StatTitle>
+              <StatIcon color={colors.success}>
+                <FiTrendingUp />
+              </StatIcon>
+            </StatHeader>
+            <StatValue>{stats.successRate.toFixed(1)}%</StatValue>
+            <StatChange positive>
+              <FiTrendingUp />
+              Overall performance
+            </StatChange>
+          </StatCard>
+        </AnimateOnScroll>
+
+        <AnimateOnScroll delay={0.5}>
+          <StatCard>
+            <StatHeader>
+              <StatTitle>Avg Response Time</StatTitle>
+              <StatIcon color={colors.warning}>
+                <FiClock />
+              </StatIcon>
+            </StatHeader>
+            <StatValue>{Math.round(stats.avgResponseTime)}ms</StatValue>
+            <StatChange positive>
+              <FiTrendingUp />
+              Average speed
+            </StatChange>
+          </StatCard>
+        </AnimateOnScroll>
       </StatsGrid>
 
       <ChartsGrid>
-        <ChartCard>
-          <ChartTitle>📊 Request Volume (Last 30 Days)</ChartTitle>
-          <div style={{ 
-            height: '280px', 
-            background: colors.backgroundSecondary, 
-            borderRadius: '12px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            color: colors.textMuted,
-            border: `2px dashed ${colors.border}`,
-            flexDirection: 'column',
-            gap: '1rem'
-          }}>
-            <FiActivity size={32} color={colors.primary} />
-            <span style={{ fontWeight: 600 }}>Interactive chart coming soon</span>
-            <span style={{ fontSize: '0.875rem' }}>Real-time analytics based on your scraping data</span>
-          </div>
-        </ChartCard>
-
-        <ActivityFeed>
-          <ActivityTitle>⚡ Recent Activity</ActivityTitle>
-          {activities.length > 0 ? (
-            activities.map((activity: any) => (
-              <ActivityItem key={activity.id}>
-                <ActivityIcon color={activity.color}>
-                  <activity.icon />
-                </ActivityIcon>
-                <ActivityContent>
-                  <ActivityText>{activity.text}</ActivityText>
-                  <ActivityTime>{activity.time}</ActivityTime>
-                </ActivityContent>
-              </ActivityItem>
-            ))
-          ) : (
-            <div style={{
-              textAlign: 'center',
-              padding: '3rem 1rem',
-              color: colors.textMuted
+        <AnimateOnScroll delay={0.6}>
+          <ChartCard>
+            <ChartTitle>📊 Request Volume (Last 30 Days)</ChartTitle>
+            <div style={{ 
+              height: '280px', 
+              background: colors.backgroundSecondary, 
+              borderRadius: '12px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              color: colors.textMuted,
+              border: `2px dashed ${colors.border}`,
+              flexDirection: 'column',
+              gap: '1rem'
             }}>
-              <FiClock size={32} style={{ marginBottom: '1rem' }} />
-              <div style={{ fontWeight: 600 }}>No recent activity</div>
-              <div style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                Start using the web scraper to see activity here
-              </div>
+              <FiActivity size={32} color={colors.primary} />
+              <span style={{ fontWeight: 600 }}>Interactive chart coming soon</span>
+              <span style={{ fontSize: '0.875rem' }}>Real-time analytics based on your scraping data</span>
             </div>
-          )}
-        </ActivityFeed>
+          </ChartCard>
+        </AnimateOnScroll>
+
+        <AnimateOnScroll delay={0.7}>
+          <ActivityFeed>
+            <ActivityTitle>⚡ Recent Activity</ActivityTitle>
+            {activities.length > 0 ? (
+              activities.map((activity: any) => (
+                <ActivityItem key={activity.id}>
+                  <ActivityIcon color={activity.color}>
+                    <activity.icon />
+                  </ActivityIcon>
+                  <ActivityContent>
+                    <ActivityText>{activity.text}</ActivityText>
+                    <ActivityTime>{activity.time}</ActivityTime>
+                  </ActivityContent>
+                </ActivityItem>
+              ))
+            ) : (
+              <div style={{
+                textAlign: 'center',
+                padding: '3rem 1rem',
+                color: colors.textMuted
+              }}>
+                <FiClock size={32} style={{ marginBottom: '1rem' }} />
+                <div style={{ fontWeight: 600 }}>No recent activity</div>
+                <div style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                  Start using the web scraper to see activity here
+                </div>
+              </div>
+            )}
+          </ActivityFeed>
+        </AnimateOnScroll>
       </ChartsGrid>
 
       <QuickActions>
-        <ActionCard>
-          <ActionIcon>
-            <FiGlobe />
-          </ActionIcon>
-          <ActionTitle>Start Scraping</ActionTitle>
-          <ActionDescription>
-            Launch the web scraper to extract data from any website
-          </ActionDescription>
-        </ActionCard>
+        <AnimateOnScroll delay={0.8}>
+          <ActionCard>
+            <ActionIcon>
+              <FiGlobe />
+            </ActionIcon>
+            <ActionTitle>Start Scraping</ActionTitle>
+            <ActionDescription>
+              Launch the web scraper to extract data from any website
+            </ActionDescription>
+          </ActionCard>
+        </AnimateOnScroll>
 
-        <ActionCard>
-          <ActionIcon>
-            <FiKey />
-          </ActionIcon>
-          <ActionTitle>Manage API Keys</ActionTitle>
-          <ActionDescription>
-            Create, view, and manage your API keys for external integrations
-          </ActionDescription>
-        </ActionCard>
+        <AnimateOnScroll delay={0.9}>
+          <ActionCard>
+            <ActionIcon>
+              <FiKey />
+            </ActionIcon>
+            <ActionTitle>Manage API Keys</ActionTitle>
+            <ActionDescription>
+              Create, view, and manage your API keys for external integrations
+            </ActionDescription>
+          </ActionCard>
+        </AnimateOnScroll>
 
-        <ActionCard>
-          <ActionIcon>
-            <FiActivity />
-          </ActionIcon>
-          <ActionTitle>View Analytics</ActionTitle>
-          <ActionDescription>
-            Analyze your usage patterns and performance metrics
-          </ActionDescription>
-        </ActionCard>
+        <AnimateOnScroll delay={1.0}>
+          <ActionCard>
+            <ActionIcon>
+              <FiActivity />
+            </ActionIcon>
+            <ActionTitle>View Analytics</ActionTitle>
+            <ActionDescription>
+              Analyze your usage patterns and performance metrics
+            </ActionDescription>
+          </ActionCard>
+        </AnimateOnScroll>
       </QuickActions>
     </HomeContainer>
   );
