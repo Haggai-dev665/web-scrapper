@@ -8,6 +8,7 @@ import ApiKeysPage from '../components/ApiKeysPage';
 import UsageAnalytics from '../components/UsageAnalytics';
 import SettingsPage from '../components/SettingsPage';
 import WebScraperPage from '../components/WebScraperPage';
+import DocumentationPage from '../components/DocumentationPage';
 import colors from '../theme/colors';
 
 const DashboardContainer = styled.div`
@@ -111,12 +112,7 @@ const Dashboard: React.FC = () => {
           </PlaceholderPage>
         );
       case 'documentation':
-        return (
-          <PlaceholderPage>
-            <h2>📚 API Documentation</h2>
-            <p>Complete API reference with examples and integration guides.</p>
-          </PlaceholderPage>
-        );
+        return <DocumentationPage />;
       case 'settings':
         return <SettingsPage />;
       default:

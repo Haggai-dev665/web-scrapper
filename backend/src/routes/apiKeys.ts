@@ -55,6 +55,24 @@ export const createApiKeyRoutes = (
     }
   });
 
+  // Get API key usage statistics
+  router.get('/:id/usage', async (req: AuthRequest, res): Promise<void> => {
+    try {
+      if (!req.userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const usage = await authService.getApiKeyUsage(req.userId, req.params.id);
+      res.status(200).json(usage);
+    } catch (error) {
+      console.error('Get API key usage error:', error);
+      res.status(404).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get API key usage' 
+      });
+    }
+  });
+
   // Delete API key
   router.delete('/:id', async (req: AuthRequest, res): Promise<void> => {
     try {

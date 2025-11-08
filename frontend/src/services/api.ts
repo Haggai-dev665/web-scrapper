@@ -66,6 +66,11 @@ export const apiService = {
     return response.data;
   },
 
+  getApiKeyUsage: async (keyId: string) => {
+    const response = await api.get(`/keys/${keyId}/usage`);
+    return response.data;
+  },
+
   // Web scraping
   scrapeWebsite: async (url: string, apiKey: string) => {
     const response = await api.post('/scrape', { url }, {

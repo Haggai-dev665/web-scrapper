@@ -225,6 +225,22 @@ const KeyMeta = styled.div`
   }
 `;
 
+const UsageBar = styled.div`
+  width: 100%;
+  height: 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+`;
+
+const UsageProgress = styled.div<{ percentage: number }>`
+  height: 100%;
+  width: ${props => props.percentage}%;
+  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+  transition: width 0.3s ease;
+`;
+
 const UsageInfo = styled.div`
   display: flex;
   align-items: center;
@@ -362,6 +378,7 @@ interface ApiKey {
   created_at: string;
   last_used: string;
   requests_count: number;
+  rate_limit?: number;
   status: 'active' | 'inactive';
 }
 
@@ -396,8 +413,9 @@ const ApiKeysPage: React.FC = () => {
         key: key.api_key || key.key,
         created_at: key.created_at ? new Date(key.created_at).toLocaleDateString() : 'Unknown',
         last_used: key.last_used ? new Date(key.last_used).toLocaleDateString() : 'Never',
-        requests_count: key.usage_count || 0,
-        status: key.active ? 'active' : 'inactive'
+        requests_count: key.usage_count || key.requests_count || key.requestsCount || 0,
+        rate_limit: key.rate_limit_per_hour || key.rateLimitPerHour || 1000,
+        status: key.active || key.is_active || key.isActive ? 'active' : 'inactive'
       }));
       
       setApiKeys(transformedKeys);
@@ -572,6 +590,19 @@ const ApiKeysPage: React.FC = () => {
               </UsageInfo>
               <div>Last used: {apiKey.last_used}</div>
             </KeyMeta>
+            
+            {apiKey.requests_count > 0 && (
+              <>
+                <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#6b7280' }}>
+                  Usage: {apiKey.requests_count} / {apiKey.rate_limit || 1000} per hour
+                </div>
+                <UsageBar>
+                  <UsageProgress 
+                    percentage={Math.min((apiKey.requests_count / (apiKey.rate_limit || 1000)) * 100, 100)} 
+                  />
+                </UsageBar>
+              </>
+            )}
           </KeyCard>
         ))}
       </KeysGrid>
