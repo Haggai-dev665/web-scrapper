@@ -12,6 +12,11 @@ export const colors = {
   lightTurquoise: '#7FEFDB', // Lighter turquoise
   darkTurquoise: '#1BC0AB',  // Darker turquoise
   
+  // Modern UI palette for dashboard
+  primary: '#6366F1',
+  primaryDark: '#4F46E5',
+  primaryLight: '#A5B4FC',
+  
   // System colors
   white: '#FFFFFF',
   black: '#1A1A1A',
@@ -26,30 +31,30 @@ export const colors = {
   darkGray: '#2A2A2A',     // Dark gray for backgrounds
   
   // Status colors (adjusted to fit palette)
-  success: '#29E7CD',
-  warning: '#F4A261',
-  error: '#E63946',
-  info: '#29E7CD',
+  success: '#10B981',
+  warning: '#F59E0B',
+  error: '#EF4444',
+  info: '#3B82F6',
   
   // Text colors
-  textPrimary: '#6A3E37',
-  textSecondary: '#8B6B66',
-  textMuted: '#A89892',
+  textPrimary: '#0F172A',
+  textSecondary: '#475569',
+  textMuted: '#94A3B8',
   textLight: '#FFFFFF',
   
   // Backgrounds
-  background: '#F4EBE8',
-  backgroundSecondary: '#DBEBE5',
-  backgroundTertiary: '#E8EBE7',
+  background: '#FFFFFF',
+  backgroundSecondary: '#F8FAFC',
+  backgroundTertiary: '#F1F5F9',
   
   // Borders
-  border: '#D4C4BF',
-  borderLight: '#E8E0DC',
+  border: '#E2E8F0',
+  borderLight: '#F1F5F9',
   
   // Shadows
-  shadow: 'rgba(106, 62, 55, 0.08)',
-  shadowMd: 'rgba(106, 62, 55, 0.12)',
-  shadowLg: 'rgba(106, 62, 55, 0.16)',
+  shadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+  shadowMd: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+  shadowLg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
 };
 
 export default colors;

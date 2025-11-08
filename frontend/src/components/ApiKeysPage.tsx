@@ -29,8 +29,9 @@ const colors = {
 };
 
 const PageContainer = styled.div`
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
+  width: 100%;
 `;
 
 const PageHeader = styled.div`
@@ -51,6 +52,10 @@ const PageTitle = styled.h1`
   font-size: 2rem;
   font-weight: 700;
   color: #111827;
+  
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+  }
 `;
 
 const CreateButton = styled.button`
@@ -75,9 +80,13 @@ const CreateButton = styled.button`
 
 const StatsRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const StatCard = styled.div`
@@ -160,6 +169,12 @@ const KeyValue = styled.div`
   font-family: 'Monaco', 'Consolas', monospace;
   font-size: 0.85rem;
   margin-bottom: 1rem;
+  overflow-x: auto;
+  
+  @media (max-width: 768px) {
+    font-size: 0.75rem;
+    padding: 0.5rem;
+  }
 `;
 
 const KeyText = styled.code<{ hidden: boolean }>`
@@ -198,10 +213,32 @@ const KeyMeta = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   padding-top: 1rem;
   border-top: 1px solid #f3f4f6;
   font-size: 0.85rem;
   color: #6b7280;
+  
+  @media (max-width: 768px) {
+    font-size: 0.75rem;
+  }
+`;
+
+const UsageBar = styled.div`
+  width: 100%;
+  height: 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+`;
+
+const UsageProgress = styled.div<{ percentage: number }>`
+  height: 100%;
+  width: ${props => props.percentage}%;
+  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+  transition: width 0.3s ease;
 `;
 
 const UsageInfo = styled.div`
@@ -341,6 +378,7 @@ interface ApiKey {
   created_at: string;
   last_used: string;
   requests_count: number;
+  rate_limit?: number;
   status: 'active' | 'inactive';
 }
 
@@ -375,8 +413,9 @@ const ApiKeysPage: React.FC = () => {
         key: key.api_key || key.key,
         created_at: key.created_at ? new Date(key.created_at).toLocaleDateString() : 'Unknown',
         last_used: key.last_used ? new Date(key.last_used).toLocaleDateString() : 'Never',
-        requests_count: key.usage_count || 0,
-        status: key.active ? 'active' : 'inactive'
+        requests_count: key.usage_count || key.requests_count || key.requestsCount || 0,
+        rate_limit: key.rate_limit_per_hour || key.rateLimitPerHour || 1000,
+        status: key.active || key.is_active || key.isActive ? 'active' : 'inactive'
       }));
       
       setApiKeys(transformedKeys);
@@ -551,6 +590,19 @@ const ApiKeysPage: React.FC = () => {
               </UsageInfo>
               <div>Last used: {apiKey.last_used}</div>
             </KeyMeta>
+            
+            {apiKey.requests_count > 0 && (
+              <>
+                <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#6b7280' }}>
+                  Usage: {apiKey.requests_count} / {apiKey.rate_limit || 1000} per hour
+                </div>
+                <UsageBar>
+                  <UsageProgress 
+                    percentage={Math.min((apiKey.requests_count / (apiKey.rate_limit || 1000)) * 100, 100)} 
+                  />
+                </UsageBar>
+              </>
+            )}
           </KeyCard>
         ))}
       </KeysGrid>

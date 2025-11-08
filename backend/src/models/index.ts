@@ -112,11 +112,38 @@ export interface NetworkResource {
   durationMs: number;
   transferSize?: number;
   encodedBodySize?: number;
+  // ADVANCED NETWORK FIELDS
+  method?: string;
+  status?: number;
+  statusText?: string;
+  mimeType?: string;
+  requestHeaders?: any;
+  responseHeaders?: any;
+  postData?: string;
+  cached?: boolean;
+  serviceWorker?: boolean;
+  remoteAddress?: string;
+  protocol?: string;
+  priority?: string;
 }
 
 export interface ConsoleLog {
   level: string;
   message: string;
+  // ADVANCED CONSOLE FIELDS
+  args?: any[];
+  location?: string;
+  stackTrace?: string;
+  errorText?: string;
+  method?: string;
+  resourceType?: string;
+}
+
+export interface SecurityIssue {
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  category: string;
+  description: string;
+  recommendation: string;
 }
 
 export interface SecurityReport {
@@ -126,6 +153,8 @@ export interface SecurityReport {
   insecureCookies: boolean;
   csp?: string;
   notes: string[];
+  issues?: SecurityIssue[];
+  score?: number;
 }
 
 export interface ScrapedData {
@@ -151,6 +180,134 @@ export interface ScrapedData {
   responseHeaders: { [key: string]: string };
   consoleLogs: ConsoleLog[];
   securityReport: SecurityReport;
+  networkRequests?: NetworkRequest[];
+  performanceMetrics?: any;
+  cookies?: any[];
+  // NEW ADVANCED FIELDS - All properly defined
+  forms?: any[];
+  scripts?: any[];
+  stylesheets?: any[];
+  iframes?: any[];
+  inputFields?: any[];
+  buttons?: any[];
+  technologies?: string[];
+  structuredData?: any[];
+  localStorage?: { [key: string]: string };
+  sessionStorage?: { [key: string]: string };
+  viewport?: any;
+  detailedConsoleLogs?: DetailedConsoleLog[];
+  pageElements?: PageElements;
+  storageData?: StorageData;
+  jsExecution?: JavaScriptExecution;
+  crawledLinks?: CrawledLink[];
+}
+
+export interface NetworkRequest {
+  url: string;
+  method: string;
+  status: number;
+  status_text: string;
+  content_type: string;
+  size_bytes: number;
+  response_time_ms: number;
+  headers: { [key: string]: string };
+  resource_type: string;
+  from_cache: boolean;
+  remote_address?: { ip: string; port: number };
+}
+
+export interface PerformanceMetrics {
+  total_load_time_ms: number;
+  dom_ready_time_ms: number;
+  first_paint_ms: number;
+  largest_contentful_paint_ms: number;
+  cumulative_layout_shift: number;
+  total_requests: number;
+  total_size_kb: number;
+  dns_lookup_ms?: number;
+  tcp_connection_ms?: number;
+  server_response_ms?: number;
+  page_download_ms?: number;
+}
+
+export interface DetailedConsoleLog {
+  level: string;
+  message: string;
+  timestamp: number;
+  source?: string;
+  line_number?: number;
+  url?: string;
+  stack_trace?: string;
+}
+
+export interface PageElements {
+  forms: Array<{
+    id?: string;
+    name?: string;
+    action?: string;
+    method?: string;
+    fields: Array<{ name: string; type: string; required: boolean }>;
+  }>;
+  scripts: Array<{
+    src?: string;
+    inline: boolean;
+    async: boolean;
+    defer: boolean;
+    type?: string;
+  }>;
+  stylesheets: Array<{
+    href?: string;
+    inline: boolean;
+    media?: string;
+  }>;
+  iframes: Array<{
+    src?: string;
+    sandbox?: string;
+    allow?: string;
+  }>;
+  buttons: Array<{
+    text: string;
+    type?: string;
+    id?: string;
+  }>;
+  inputs: Array<{
+    type: string;
+    name?: string;
+    placeholder?: string;
+    required: boolean;
+  }>;
+}
+
+export interface CrawledLink {
+  url: string;
+  title: string;
+  status: number;
+  content_type?: string;
+  size_kb?: number;
+  load_time_ms?: number;
+  error?: string;
+}
+
+export interface JavaScriptExecution {
+  errors: string[];
+  warnings: string[];
+  global_variables: string[];
+  event_listeners: number;
+}
+
+export interface StorageData {
+  localStorage: Record<string, string>;
+  sessionStorage: Record<string, string>;
+  cookies: Array<{
+    name: string;
+    value: string;
+    domain: string;
+    path: string;
+    expires?: number;
+    httpOnly: boolean;
+    secure: boolean;
+    sameSite?: string;
+  }>;
 }
 
 export interface DashboardStats {

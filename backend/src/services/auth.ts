@@ -251,6 +251,52 @@ export class AuthService {
     }
   }
 
+  async getApiKeyUsage(userId: string, apiKeyId: string): Promise<any> {
+    const userObjectId = new ObjectId(userId);
+    const apiKeyObjectId = new ObjectId(apiKeyId);
+
+    // Find the API key
+    const apiKey = await this.db.apiKeysCollection().findOne({
+      _id: apiKeyObjectId,
+      userId: userObjectId
+    });
+
+    if (!apiKey) {
+      throw new Error('API key not found');
+    }
+
+    // Get usage logs for this API key from the last 30 days
+    const logs = await this.db.usageLogsCollection()
+      .find({ apiKeyId: apiKeyObjectId })
+      .sort({ timestamp: -1 })
+      .limit(100)
+      .toArray();
+
+    const totalRequests = logs.length;
+    const successfulRequests = logs.filter(log => log.success).length;
+    const failedRequests = totalRequests - successfulRequests;
+    
+    const avgResponseTime = logs.length > 0
+      ? logs.reduce((sum, log) => sum + (log.responseTimeMs || 0), 0) / logs.length
+      : 0;
+
+    return {
+      apiKeyId: apiKeyObjectId.toString(),
+      totalRequests,
+      successfulRequests,
+      failedRequests,
+      avgResponseTime: Math.round(avgResponseTime),
+      rateLimitPerHour: apiKey.rateLimitPerHour,
+      currentHourUsage: 0, // TODO: Implement hourly tracking
+      recentRequests: logs.slice(0, 10).map(log => ({
+        timestamp: log.timestamp.toISOString(),
+        success: log.success,
+        responseTimeMs: log.responseTimeMs,
+        urlScraped: log.urlScraped
+      }))
+    };
+  }
+
   async verifyApiKey(apiKey: string): Promise<{ userId: ObjectId; apiKeyId: ObjectId }> {
     console.log('🔍 Verifying API key:', apiKey.substring(0, 8) + '...');
     

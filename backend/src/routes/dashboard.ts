@@ -19,11 +19,12 @@ export const createDashboardRoutes = (db: DatabaseConnection): Router => {
 
       // Fetch real data from database
       const activeKeys = await db.countActiveApiKeys(userObjectId);
-      const recentLogs = await db.getUsageLogsForUser(userObjectId, 10);
+      const recentLogs = await db.getUsageLogsForUser(userObjectId, 20);
 
       // Get stats for different time periods
       const statsToday = await db.getUsageStatsForPeriod(userObjectId, 1);
       const statsMonth = await db.getUsageStatsForPeriod(userObjectId, 30);
+      const dailyUsage = await db.getDailyUsageStats(userObjectId, 30);
 
       // Convert recent logs to activity format
       const recentActivity: RecentActivity[] = recentLogs.map(log => ({
@@ -34,15 +35,19 @@ export const createDashboardRoutes = (db: DatabaseConnection): Router => {
         responseTimeMs: log.responseTimeMs
       }));
 
+      // Get user's monthly limit
+      const user = await db.usersCollection().findOne({ _id: userObjectId });
+      const monthlyLimit = user?.monthlyLimit || 10000;
+
       const stats: DashboardStats = {
         totalRequestsToday: statsToday.totalRequests,
         totalRequestsThisMonth: statsMonth.totalRequests,
-        requestsRemaining: 10000 - statsMonth.totalRequests,
+        requestsRemaining: monthlyLimit - statsMonth.totalRequests,
         activeApiKeys: activeKeys,
-        avgResponseTimeMs: statsMonth.avgResponseTime,
-        successRate: statsMonth.successRate,
+        avgResponseTimeMs: Math.round(statsMonth.avgResponseTime),
+        successRate: Math.round(statsMonth.successRate * 10) / 10, // Round to 1 decimal
         recentActivity,
-        usageByDay: []
+        usageByDay: dailyUsage
       };
 
       res.status(200).json(stats);

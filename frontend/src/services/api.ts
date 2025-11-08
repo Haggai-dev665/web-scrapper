@@ -7,7 +7,7 @@ const API_BASE_URL = import.meta.env.PROD
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 300000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -63,6 +63,11 @@ export const apiService = {
 
   deleteApiKey: async (keyId: string) => {
     const response = await api.delete(`/keys/${keyId}`);
+    return response.data;
+  },
+
+  getApiKeyUsage: async (keyId: string) => {
+    const response = await api.get(`/keys/${keyId}/usage`);
     return response.data;
   },
 

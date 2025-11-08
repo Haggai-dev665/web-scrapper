@@ -13,7 +13,9 @@ import {
   FiActivity,
   FiShield,
   FiClock,
-  FiFileText
+  FiFileText,
+  FiChevronLeft,
+  FiChevronRight
 } from 'react-icons/fi';
 import colors from '../theme/colors';
 
@@ -30,15 +32,19 @@ const SidebarContainer = styled.div<{ isOpen: boolean }>`
   box-shadow: 0 4px 15px ${colors.shadow};
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
   
   @media (max-width: 1024px) {
     width: ${props => props.isOpen ? '280px' : '0'};
     transform: translateX(${props => props.isOpen ? '0' : '-100%'});
+    box-shadow: ${props => props.isOpen ? '4px 0 20px rgba(0, 0, 0, 0.15)' : 'none'};
   }
   
   @media (max-width: 768px) {
-    width: ${props => props.isOpen ? '280px' : '0'};
+    width: ${props => props.isOpen ? '100%' : '0'};
+    max-width: 280px;
     transform: translateX(${props => props.isOpen ? '0' : '-100%'});
+    box-shadow: ${props => props.isOpen ? '4px 0 20px rgba(0, 0, 0, 0.15)' : 'none'};
   }
 `;
 
@@ -91,7 +97,7 @@ const Logo = styled.div<{ isOpen: boolean }>`
   }
 `;
 
-const ToggleButton = styled.button`
+const ToggleButton = styled.button<{ isOpen: boolean }>`
   background: none;
   border: none;
   color: ${colors.textSecondary};
@@ -100,11 +106,65 @@ const ToggleButton = styled.button`
   padding: 0.5rem;
   border-radius: 8px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: ${props => props.isOpen ? 'flex' : 'none'};
   
   &:hover {
     background-color: ${colors.backgroundTertiary};
     color: ${colors.textPrimary};
   }
+  
+  @media (max-width: 1024px) {
+    display: flex;
+  }
+  
+  @media (min-width: 1025px) {
+    display: ${props => props.isOpen ? 'flex' : 'none'};
+  }
+`;
+
+const DesktopToggleButton = styled.button`
+  position: absolute;
+  right: -15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: ${colors.white};
+  border: 2px solid ${colors.border};
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: ${colors.textSecondary};
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1001;
+  box-shadow: ${colors.shadowMd};
+  
+  &:hover {
+    background: ${colors.primary};
+    border-color: ${colors.primary};
+    color: white;
+    transform: translateY(-50%) scale(1.1);
+  }
+  
+  @media (max-width: 1024px) {
+    display: none;
+  }
+`;
+
+const Overlay = styled.div<{ isVisible: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: ${props => props.isVisible ? 1 : 0};
+  visibility: ${props => props.isVisible ? 'visible' : 'hidden'};
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 999;
+  backdrop-filter: blur(2px);
   
   @media (min-width: 1025px) {
     display: none;
@@ -274,55 +334,67 @@ const Sidebar: React.FC<SidebarProps> = ({
   const subscriptionTier = user?.subscription_tier || 'Free';
   
   return (
-    <SidebarContainer isOpen={isOpen}>
-      <SidebarHeader isOpen={isOpen}>
-        <LogoContainer isOpen={isOpen}>
-          <LogoIcon>
-            <FiGlobe />
-          </LogoIcon>
-          <Logo isOpen={isOpen}>
-            <div className="title">WebScraper</div>
-            <div className="subtitle">Professional</div>
-          </Logo>
-        </LogoContainer>
-        <ToggleButton onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <FiX /> : <FiMenu />}
-        </ToggleButton>
-      </SidebarHeader>
-      
-      <NavList>
-        {navItems.map((item) => {
-          const IconComponent = item.icon;
-          return (
-            <NavItem
-              key={item.id}
-              active={currentPage === item.id}
-              isOpen={isOpen}
-              onClick={() => setCurrentPage(item.id)}
-            >
-              <IconComponent className="icon" />
-              <span className="label">{item.label}</span>
-            </NavItem>
-          );
-        })}
-      </NavList>
-      
-      <UserSection isOpen={isOpen}>
-        <UserInfo isOpen={isOpen}>
-          <div className="avatar">
-            <FiUser />
-          </div>
-          <div className="info">
-            <div className="name">{displayName}</div>
-            <div className="tier">
-              <FiStar className="crown" />
-              {subscriptionTier} Plan
+    <>
+      <Overlay isVisible={isOpen} onClick={() => setIsOpen(false)} />
+      <SidebarContainer isOpen={isOpen}>
+        <DesktopToggleButton onClick={() => setIsOpen(!isOpen)}>
+          {isOpen ? <FiChevronLeft /> : <FiChevronRight />}
+        </DesktopToggleButton>
+        <SidebarHeader isOpen={isOpen}>
+          <LogoContainer isOpen={isOpen}>
+            <LogoIcon>
+              <FiGlobe />
+            </LogoIcon>
+            <Logo isOpen={isOpen}>
+              <div className="title">WebScraper</div>
+              <div className="subtitle">Professional</div>
+            </Logo>
+          </LogoContainer>
+          <ToggleButton isOpen={isOpen} onClick={() => setIsOpen(!isOpen)}>
+            {isOpen ? <FiX /> : <FiMenu />}
+          </ToggleButton>
+        </SidebarHeader>
+        
+        <NavList>
+          {navItems.map((item) => {
+            const IconComponent = item.icon;
+            return (
+              <NavItem
+                key={item.id}
+                active={currentPage === item.id}
+                isOpen={isOpen}
+                onClick={() => {
+                  setCurrentPage(item.id);
+                  // Close sidebar on mobile when an item is clicked
+                  if (window.innerWidth <= 1024) {
+                    setIsOpen(false);
+                  }
+                }}
+              >
+                <IconComponent className="icon" />
+                <span className="label">{item.label}</span>
+              </NavItem>
+            );
+          })}
+        </NavList>
+        
+        <UserSection isOpen={isOpen}>
+          <UserInfo isOpen={isOpen}>
+            <div className="avatar">
+              <FiUser />
             </div>
-          </div>
-          <div className="status"></div>
-        </UserInfo>
-      </UserSection>
-    </SidebarContainer>
+            <div className="info">
+              <div className="name">{displayName}</div>
+              <div className="tier">
+                <FiStar className="crown" />
+                {subscriptionTier} Plan
+              </div>
+            </div>
+            <div className="status"></div>
+          </UserInfo>
+        </UserSection>
+      </SidebarContainer>
+    </>
   );
 };
 

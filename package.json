@@ -2,8 +2,8 @@
   "name": "web-scrapper-fullstack",
   "version": "1.0.0",
   "scripts": {
-    "build": "cd backend && npm install && npm run build && cd ../frontend && npm install && npm run build",
-    "heroku-postbuild": "cd backend && npm install && npm run build && cd ../frontend && npm install && npm run build",
+    "build": "cd backend && PUPPETEER_SKIP_DOWNLOAD=true npm install && npm run build && cd ../frontend && npm install && npm run build",
+    "heroku-postbuild": "cd backend && PUPPETEER_SKIP_DOWNLOAD=true npm install && npm run build && cd ../frontend && npm install && npm run build",
     "start": "cd backend && npm start",
     "dev": "cd backend && npm run dev"
   },

@@ -28,7 +28,14 @@ export const createScrapeRoutes = (
       const data = await scraperService.scrapeUrl(url);
       const responseTime = Date.now() - startTime;
 
-      // Save usage log
+      // DEBUG: Log what we're sending
+      console.log('📤 Sending response with:');
+      console.log(`   - Network Resources: ${data.networkResources?.length || 0}`);
+      console.log(`   - Console Logs: ${data.consoleLogs?.length || 0}`);
+      console.log(`   - Security Report: ${data.securityReport ? 'YES' : 'NO'}`);
+      console.log(`   - Crawled Links: ${data.crawledLinks?.length || 0}`);
+
+      // Save usage log and increment API key usage
       if (req.userId && req.apiKeyId) {
         const usageLog: UsageLog = {
           userId: new ObjectId(req.userId),
@@ -43,6 +50,8 @@ export const createScrapeRoutes = (
 
         try {
           await db.saveUsageLog(usageLog);
+          // Increment API key usage count
+          await db.incrementApiKeyUsage(new ObjectId(req.apiKeyId));
         } catch (logError) {
           console.error('Failed to save usage log:', logError);
         }
