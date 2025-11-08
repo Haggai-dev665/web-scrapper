@@ -27,15 +27,25 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:3000',
   'http://127.0.0.1:5173',
-  'https://webscrap-9f292cec4bcc.herokuapp.com'
-];
+  process.env.FRONTEND_URL || 'https://webscrap-9f292cec4bcc.herokuapp.com',
+  'https://webscrap-9f292cec4bcc.herokuapp.com',
+  'https://webscraper.live',
+  'https://www.webscraper.live'
+].filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else if (process.env.NODE_ENV === 'development') {
+      // Allow all origins in development
       callback(null, true);
     } else {
-      callback(null, true); // Allow all origins in development
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
@@ -70,7 +80,8 @@ app.get('/api/health', (_req: Request, res: Response) => {
   res.json({
     status: 'healthy',
     service: 'web-scraper-backend',
-    version: '0.1.0'
+    version: '0.1.0',
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -87,26 +98,24 @@ async function setupRoutes() {
   // API routes (require API key authentication)
   app.use('/api/scrape', apiKeyMiddleware(authService), createScrapeRoutes(scraperService, db));
 
-  // Serve frontend static files
+  // Serve frontend static files in production
   const frontendPath = path.join(__dirname, '../../frontend/dist');
-  app.use(express.static(frontendPath));
+  console.log('📁 Serving frontend from:', frontendPath);
+  app.use(express.static(frontendPath, { maxAge: '1d' }));
 
-  // Serve index.html for all other routes (SPA support)
-  app.get('/', (_req: Request, res: Response) => {
+  // Serve index.html for SPA routes (frontend routes)
+  app.get('*', (_req: Request, res: Response): void => {
+    // Don't serve index.html for API routes
+    if (_req.path.startsWith('/api/')) {
+      res.status(404).json({ error: 'API endpoint not found' });
+      return;
+    }
+    
     const indexPath = path.join(frontendPath, 'index.html');
     res.sendFile(indexPath, (err) => {
       if (err) {
-        res.status(404).send('<h1>Frontend not built</h1>');
-      }
-    });
-  });
-
-  // Fallback for SPA routes
-  app.get('*', (_req: Request, res: Response) => {
-    const indexPath = path.join(frontendPath, 'index.html');
-    res.sendFile(indexPath, (err) => {
-      if (err) {
-        res.status(404).send('<h1>Page not found</h1>');
+        console.error('Error serving index.html:', err);
+        res.status(500).send('<h1>Frontend not built. Please run: npm run build</h1>');
       }
     });
   });

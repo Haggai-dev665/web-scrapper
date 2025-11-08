@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import { useToast } from './Toast';
+import { animations } from '../theme/animations';
 
 // Color Palette matching landing page
 const colors = {
@@ -29,8 +30,10 @@ const colors = {
 };
 
 const PageContainer = styled.div`
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
+  width: 100%;
+  overflow-x: hidden;
 `;
 
 const PageHeader = styled.div`
@@ -75,9 +78,13 @@ const CreateButton = styled.button`
 
 const StatsRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const StatCard = styled.div`
@@ -88,9 +95,10 @@ const StatCard = styled.div`
   border: 1px solid rgba(123, 104, 238, 0.2);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
+  ${animations.fadeInUp('0.3s')}
   
   &:hover {
-    transform: translateY(-2px);
+    transform: translateY(-4px);
     box-shadow: 0 12px 40px rgba(123, 104, 238, 0.2);
   }
 `;
@@ -119,10 +127,12 @@ const KeyCard = styled.div`
   border-radius: 12px;
   padding: 1.5rem;
   transition: all 0.3s ease;
+  ${animations.fadeInUp('0.3s')}
   
   &:hover {
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
     border-color: #3b82f6;
+    transform: translateY(-2px);
   }
 `;
 
@@ -160,6 +170,16 @@ const KeyValue = styled.div`
   font-family: 'Monaco', 'Consolas', monospace;
   font-size: 0.85rem;
   margin-bottom: 1rem;
+  overflow-x: auto;
+  
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 2px;
+  }
 `;
 
 const KeyText = styled.code<{ hidden: boolean }>`
@@ -202,12 +222,21 @@ const KeyMeta = styled.div`
   border-top: 1px solid #f3f4f6;
   font-size: 0.85rem;
   color: #6b7280;
+  gap: 1rem;
+  flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 `;
 
 const UsageInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
 `;
 
 const UsageItem = styled.div`

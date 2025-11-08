@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import Loader from './Loader';
+import { animations } from '../theme/animations';
 
 // Modern Color Palette
 const colors = {
@@ -37,9 +38,11 @@ const colors = {
 };
 
 const HomeContainer = styled.div`
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0;
+  width: 100%;
+  overflow-x: hidden;
 `;
 
 const WelcomeSection = styled.div`
@@ -96,9 +99,14 @@ const WelcomeSubtitle = styled.p`
 
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2.5rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 `;
 
 const StatCard = styled.div`
@@ -108,6 +116,7 @@ const StatCard = styled.div`
   box-shadow: ${colors.shadowLg};
   border: 1px solid ${colors.border};
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  ${animations.fadeInUp('0.3s')}
   
   &:hover {
     transform: translateY(-4px);
@@ -170,6 +179,11 @@ const ChartsGrid = styled.div`
   
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  @media (max-width: 768px) {
+    gap: 1rem;
   }
 `;
 
@@ -279,8 +293,13 @@ const ActivityTime = styled.div`
 
 const QuickActions = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 `;
 
 const ActionCard = styled.button`
@@ -292,11 +311,16 @@ const ActionCard = styled.button`
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
   box-shadow: ${colors.shadowMd};
+  ${animations.fadeInUp('0.4s')}
   
   &:hover {
     transform: translateY(-4px);
     box-shadow: ${colors.shadowLg};
     border-color: ${colors.primary};
+  }
+  
+  &:active {
+    transform: translateY(-2px);
   }
 `;
 
