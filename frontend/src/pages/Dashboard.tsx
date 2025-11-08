@@ -24,13 +24,17 @@ const MainContent = styled.div<{ sidebarOpen: boolean }>`
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-left: ${props => props.sidebarOpen ? '280px' : '80px'};
   background: ${colors.backgroundSecondary};
+  min-height: 100vh;
+  width: ${props => props.sidebarOpen ? 'calc(100% - 280px)' : 'calc(100% - 80px)'};
 
   @media (max-width: 1024px) {
-    margin-left: ${props => props.sidebarOpen ? '280px' : '0'};
+    margin-left: 0;
+    width: 100%;
   }
 
   @media (max-width: 768px) {
     margin-left: 0;
+    width: 100%;
   }
 `;
 
@@ -38,14 +42,16 @@ const ContentArea = styled.main`
   flex: 1;
   padding: 2rem 2.5rem;
   overflow-y: auto;
+  overflow-x: hidden;
   background: ${colors.backgroundSecondary};
+  max-width: 100%;
   
   @media (max-width: 1024px) {
-    padding: 2rem;
+    padding: 1.5rem 2rem;
   }
   
   @media (max-width: 768px) {
-    padding: 1.5rem 1rem;
+    padding: 1rem;
   }
 `;
 

@@ -29,8 +29,9 @@ const colors = {
 };
 
 const PageContainer = styled.div`
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
+  width: 100%;
 `;
 
 const PageHeader = styled.div`
@@ -51,6 +52,10 @@ const PageTitle = styled.h1`
   font-size: 2rem;
   font-weight: 700;
   color: #111827;
+  
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+  }
 `;
 
 const CreateButton = styled.button`
@@ -75,9 +80,13 @@ const CreateButton = styled.button`
 
 const StatsRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const StatCard = styled.div`
@@ -160,6 +169,12 @@ const KeyValue = styled.div`
   font-family: 'Monaco', 'Consolas', monospace;
   font-size: 0.85rem;
   margin-bottom: 1rem;
+  overflow-x: auto;
+  
+  @media (max-width: 768px) {
+    font-size: 0.75rem;
+    padding: 0.5rem;
+  }
 `;
 
 const KeyText = styled.code<{ hidden: boolean }>`
@@ -198,10 +213,16 @@ const KeyMeta = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   padding-top: 1rem;
   border-top: 1px solid #f3f4f6;
   font-size: 0.85rem;
   color: #6b7280;
+  
+  @media (max-width: 768px) {
+    font-size: 0.75rem;
+  }
 `;
 
 const UsageInfo = styled.div`

@@ -37,9 +37,10 @@ const colors = {
 };
 
 const HomeContainer = styled.div`
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0;
+  width: 100%;
 `;
 
 const WelcomeSection = styled.div`
@@ -51,6 +52,11 @@ const WelcomeSection = styled.div`
   position: relative;
   overflow: hidden;
   box-shadow: ${colors.shadowLg};
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    border-radius: 15px;
+  }
   
   &::before {
     content: '';
@@ -85,6 +91,14 @@ const WelcomeTitle = styled.h1`
   font-size: 2.25rem;
   font-weight: 700;
   line-height: 1.2;
+  
+  @media (max-width: 768px) {
+    font-size: 1.75rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.5rem;
+  }
 `;
 
 const WelcomeSubtitle = styled.p`
@@ -92,13 +106,30 @@ const WelcomeSubtitle = styled.p`
   opacity: 0.9;
   font-size: 1.125rem;
   line-height: 1.5;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.875rem;
+  }
 `;
 
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2.5rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const StatCard = styled.div`
@@ -168,8 +199,18 @@ const ChartsGrid = styled.div`
   gap: 2rem;
   margin-bottom: 2.5rem;
   
+  @media (max-width: 1200px) {
+    grid-template-columns: 1.5fr 1fr;
+    gap: 1.5rem;
+  }
+  
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  @media (max-width: 768px) {
+    gap: 1rem;
   }
 `;
 
@@ -279,8 +320,17 @@ const ActivityTime = styled.div`
 
 const QuickActions = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const ActionCard = styled.button`

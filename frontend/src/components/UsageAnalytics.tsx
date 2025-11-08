@@ -37,9 +37,10 @@ const colors = {
 };
 
 const AnalyticsContainer = styled.div`
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0;
+  width: 100%;
 `;
 
 const PageHeader = styled.div`
@@ -124,9 +125,18 @@ const FilterButton = styled.button<{ active: boolean }>`
 
 const MetricsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const MetricCard = styled.div`
@@ -199,6 +209,10 @@ const ChartsSection = styled.div`
   grid-template-columns: 2fr 1fr;
   gap: 1.5rem;
   margin-bottom: 2rem;
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: 1.5fr 1fr;
+  }
   
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
