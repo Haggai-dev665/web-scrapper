@@ -29,8 +29,10 @@ const colors = {
 };
 
 const PageContainer = styled.div`
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
+  width: 100%;
+  overflow-x: hidden;
 `;
 
 const PageHeader = styled.div`
@@ -75,9 +77,13 @@ const CreateButton = styled.button`
 
 const StatsRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const StatCard = styled.div`
@@ -160,6 +166,16 @@ const KeyValue = styled.div`
   font-family: 'Monaco', 'Consolas', monospace;
   font-size: 0.85rem;
   margin-bottom: 1rem;
+  overflow-x: auto;
+  
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 2px;
+  }
 `;
 
 const KeyText = styled.code<{ hidden: boolean }>`
@@ -202,12 +218,21 @@ const KeyMeta = styled.div`
   border-top: 1px solid #f3f4f6;
   font-size: 0.85rem;
   color: #6b7280;
+  gap: 1rem;
+  flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 `;
 
 const UsageInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
 `;
 
 const UsageItem = styled.div`

@@ -8,6 +8,7 @@ import ApiKeysPage from '../components/ApiKeysPage';
 import UsageAnalytics from '../components/UsageAnalytics';
 import SettingsPage from '../components/SettingsPage';
 import WebScraperPage from '../components/WebScraperPage';
+import ApiDocsPage from '../components/ApiDocsPage';
 import colors from '../theme/colors';
 
 const DashboardContainer = styled.div`
@@ -15,6 +16,8 @@ const DashboardContainer = styled.div`
   min-height: 100vh;
   background: ${colors.cream};
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  overflow-x: hidden;
+  width: 100%;
 `;
 
 const MainContent = styled.div<{ sidebarOpen: boolean }>`
@@ -24,13 +27,18 @@ const MainContent = styled.div<{ sidebarOpen: boolean }>`
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-left: ${props => props.sidebarOpen ? '280px' : '80px'};
   background: ${colors.backgroundSecondary};
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
 
   @media (max-width: 1024px) {
-    margin-left: ${props => props.sidebarOpen ? '280px' : '0'};
+    margin-left: 0;
+    width: 100%;
   }
 
   @media (max-width: 768px) {
     margin-left: 0;
+    width: 100%;
   }
 `;
 
@@ -38,7 +46,10 @@ const ContentArea = styled.main`
   flex: 1;
   padding: 2rem 2.5rem;
   overflow-y: auto;
+  overflow-x: hidden;
   background: ${colors.backgroundSecondary};
+  width: 100%;
+  max-width: 100%;
   
   @media (max-width: 1024px) {
     padding: 2rem;
@@ -105,12 +116,7 @@ const Dashboard: React.FC = () => {
           </PlaceholderPage>
         );
       case 'documentation':
-        return (
-          <PlaceholderPage>
-            <h2>📚 API Documentation</h2>
-            <p>Complete API reference with examples and integration guides.</p>
-          </PlaceholderPage>
-        );
+        return <ApiDocsPage />;
       case 'settings':
         return <SettingsPage />;
       default:

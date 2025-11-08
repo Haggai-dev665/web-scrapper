@@ -13,9 +13,28 @@ import {
   FiActivity,
   FiShield,
   FiClock,
-  FiFileText
+  FiFileText,
+  FiChevronLeft,
+  FiChevronRight
 } from 'react-icons/fi';
 import colors from '../theme/colors';
+
+const Overlay = styled.div<{ isOpen: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: ${props => props.isOpen ? 1 : 0};
+  visibility: ${props => props.isOpen ? 'visible' : 'hidden'};
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  @media (min-width: 1025px) {
+    display: none;
+  }
+`;
 
 const SidebarContainer = styled.div<{ isOpen: boolean }>`
   position: fixed;
@@ -30,15 +49,38 @@ const SidebarContainer = styled.div<{ isOpen: boolean }>`
   box-shadow: 0 4px 15px ${colors.shadow};
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: ${colors.border};
+    border-radius: 2px;
+  }
+  
+  /* Hide scrollbar for IE, Edge and Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: ${colors.border} transparent;
   
   @media (max-width: 1024px) {
     width: ${props => props.isOpen ? '280px' : '0'};
     transform: translateX(${props => props.isOpen ? '0' : '-100%'});
+    box-shadow: ${props => props.isOpen ? '4px 0 15px rgba(0, 0, 0, 0.1)' : 'none'};
   }
   
   @media (max-width: 768px) {
     width: ${props => props.isOpen ? '280px' : '0'};
     transform: translateX(${props => props.isOpen ? '0' : '-100%'});
+    box-shadow: ${props => props.isOpen ? '4px 0 15px rgba(0, 0, 0, 0.1)' : 'none'};
   }
 `;
 
@@ -100,14 +142,13 @@ const ToggleButton = styled.button`
   padding: 0.5rem;
   border-radius: 8px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   
   &:hover {
     background-color: ${colors.backgroundTertiary};
     color: ${colors.textPrimary};
-  }
-  
-  @media (min-width: 1025px) {
-    display: none;
   }
 `;
 
@@ -274,55 +315,58 @@ const Sidebar: React.FC<SidebarProps> = ({
   const subscriptionTier = user?.subscription_tier || 'Free';
   
   return (
-    <SidebarContainer isOpen={isOpen}>
-      <SidebarHeader isOpen={isOpen}>
-        <LogoContainer isOpen={isOpen}>
-          <LogoIcon>
-            <FiGlobe />
-          </LogoIcon>
-          <Logo isOpen={isOpen}>
-            <div className="title">WebScraper</div>
-            <div className="subtitle">Professional</div>
-          </Logo>
-        </LogoContainer>
-        <ToggleButton onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <FiX /> : <FiMenu />}
-        </ToggleButton>
-      </SidebarHeader>
-      
-      <NavList>
-        {navItems.map((item) => {
-          const IconComponent = item.icon;
-          return (
-            <NavItem
-              key={item.id}
-              active={currentPage === item.id}
-              isOpen={isOpen}
-              onClick={() => setCurrentPage(item.id)}
-            >
-              <IconComponent className="icon" />
-              <span className="label">{item.label}</span>
-            </NavItem>
-          );
-        })}
-      </NavList>
-      
-      <UserSection isOpen={isOpen}>
-        <UserInfo isOpen={isOpen}>
-          <div className="avatar">
-            <FiUser />
-          </div>
-          <div className="info">
-            <div className="name">{displayName}</div>
-            <div className="tier">
-              <FiStar className="crown" />
-              {subscriptionTier} Plan
+    <>
+      <Overlay isOpen={isOpen} onClick={() => setIsOpen(false)} />
+      <SidebarContainer isOpen={isOpen}>
+        <SidebarHeader isOpen={isOpen}>
+          <LogoContainer isOpen={isOpen}>
+            <LogoIcon>
+              <FiGlobe />
+            </LogoIcon>
+            <Logo isOpen={isOpen}>
+              <div className="title">WebScraper</div>
+              <div className="subtitle">Professional</div>
+            </Logo>
+          </LogoContainer>
+          <ToggleButton onClick={() => setIsOpen(!isOpen)}>
+            {isOpen ? <FiChevronLeft /> : <FiChevronRight />}
+          </ToggleButton>
+        </SidebarHeader>
+        
+        <NavList>
+          {navItems.map((item) => {
+            const IconComponent = item.icon;
+            return (
+              <NavItem
+                key={item.id}
+                active={currentPage === item.id}
+                isOpen={isOpen}
+                onClick={() => setCurrentPage(item.id)}
+              >
+                <IconComponent className="icon" />
+                <span className="label">{item.label}</span>
+              </NavItem>
+            );
+          })}
+        </NavList>
+        
+        <UserSection isOpen={isOpen}>
+          <UserInfo isOpen={isOpen}>
+            <div className="avatar">
+              <FiUser />
             </div>
-          </div>
-          <div className="status"></div>
-        </UserInfo>
-      </UserSection>
-    </SidebarContainer>
+            <div className="info">
+              <div className="name">{displayName}</div>
+              <div className="tier">
+                <FiStar className="crown" />
+                {subscriptionTier} Plan
+              </div>
+            </div>
+            <div className="status"></div>
+          </UserInfo>
+        </UserSection>
+      </SidebarContainer>
+    </>
   );
 };
 
