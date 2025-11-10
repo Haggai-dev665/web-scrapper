@@ -18,7 +18,8 @@ export class ScraperService {
   async initialize(): Promise<void> {
     if (!this.browser) {
       console.log('🚀 Launching Puppeteer browser...');
-      this.browser = await puppeteerExtra.launch({
+      
+      const launchOptions: any = {
         headless: 'new',
         args: [
           '--no-sandbox',
@@ -29,7 +30,15 @@ export class ScraperService {
           '--no-zygote',
           '--disable-gpu'
         ]
-      });
+      };
+
+      // Use system Chrome on Heroku (provided by Puppeteer buildpack)
+      if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+        console.log('📦 Using system Chrome from buildpack');
+      }
+
+      this.browser = await puppeteerExtra.launch(launchOptions);
       console.log('✅ Puppeteer browser launched');
     }
   }
