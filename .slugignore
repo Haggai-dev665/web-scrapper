@@ -1,0 +1,44 @@
+# Ignore development files to reduce slug size
+*.md
+.git
+.gitignore
+.env.example
+.vscode
+.idea
+
+# Frontend source (we only need the build)
+frontend/src
+frontend/public
+frontend/node_modules
+frontend/tsconfig.json
+frontend/tsconfig.node.json
+frontend/vite.config.ts
+frontend/.env
+frontend/.gitignore
+
+# Backend source (we only need the compiled dist)
+backend/src
+backend/node_modules
+backend/tsconfig.json
+backend/.env
+
+# Rust artifacts (not needed for production)
+target/
+Cargo.toml
+Cargo.lock
+
+# Test files
+**/*.test.ts
+**/*.test.tsx
+**/*.test.js
+**/test/
+**/__tests__/
+
+# Documentation
+docs/
+*.md
+API.md
+DEPLOYMENT.md
+GETTING_STARTED.md
+MIGRATION.md
+README.md

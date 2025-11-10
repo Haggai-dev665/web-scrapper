@@ -99,7 +99,9 @@ async function setupRoutes() {
   app.use('/api/scrape', apiKeyMiddleware(authService), createScrapeRoutes(scraperService, db));
 
   // Serve frontend static files in production
-  const frontendPath = path.join(__dirname, '../../frontend/dist');
+  const frontendPath = process.env.NODE_ENV === 'production'
+    ? path.join(__dirname, 'public')  // In production, frontend is copied to backend/dist/public
+    : path.join(__dirname, '../../frontend/dist');  // In development, use frontend/dist
   console.log('📁 Serving frontend from:', frontendPath);
   app.use(express.static(frontendPath, { maxAge: '1d' }));
 
