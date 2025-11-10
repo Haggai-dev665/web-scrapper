@@ -35,6 +35,9 @@ export default defineConfig({
     // Suppress all warnings and errors
     emptyOutDir: true,
     rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html')
+      },
       onwarn(warning, warn) {
         // Suppress all warnings
         return;
