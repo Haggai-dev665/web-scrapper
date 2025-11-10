@@ -23,10 +23,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // CORS configuration
 const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://127.0.0.1:3000',
-  'http://127.0.0.1:5173',
   process.env.FRONTEND_URL || 'https://webscrap-9f292cec4bcc.herokuapp.com',
   'https://webscrap-9f292cec4bcc.herokuapp.com',
   'https://webscrapper.live',

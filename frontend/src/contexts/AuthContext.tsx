@@ -31,7 +31,7 @@ export const useAuth = () => {
   return context;
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE_URL = 'https://webscrap-9f292cec4bcc.herokuapp.com';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);

@@ -1,8 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.PROD 
-  ? '/api'  // In production, use relative path since backend serves frontend
-  : 'http://localhost:8080/api';
+const API_BASE_URL = 'https://webscrap-9f292cec4bcc.herokuapp.com/api';
 
 // Create axios instance with default config
 const api = axios.create({
