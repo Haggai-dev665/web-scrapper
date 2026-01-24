@@ -1,0 +1,31 @@
+{
+  "name": "Web Scrapper API",
+  "description": "Advanced web scraping API with Puppeteer",
+  "keywords": ["web-scraping", "puppeteer", "nodejs"],
+  "buildpacks": [
+    {
+      "url": "https://github.com/jontewks/puppeteer-heroku-buildpack"
+    },
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "env": {
+    "PUPPETEER_EXECUTABLE_PATH": {
+      "description": "Path to Chrome executable (set by buildpack)",
+      "value": "/app/.apt/usr/bin/google-chrome-stable"
+    },
+    "MONGODB_URI": {
+      "description": "MongoDB connection string",
+      "required": true
+    },
+    "JWT_SECRET": {
+      "description": "Secret key for JWT tokens",
+      "generator": "secret"
+    },
+    "PORT": {
+      "description": "Port to run the server on",
+      "value": "8080"
+    }
+  }
+}

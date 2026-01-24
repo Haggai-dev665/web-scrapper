@@ -28,14 +28,23 @@ export class ScraperService {
           '--disable-accelerated-2d-canvas',
           '--no-first-run',
           '--no-zygote',
-          '--disable-gpu'
+          '--disable-gpu',
+          '--single-process',
+          '--disable-features=IsolateOrigins,site-per-process'
         ]
       };
 
-      // Use system Chrome on Heroku (provided by Puppeteer buildpack)
-      if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-        launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
-        console.log('📦 Using system Chrome from buildpack');
+      // Detect Chrome executable path for different environments
+      const chromePath = process.env.PUPPETEER_EXECUTABLE_PATH || 
+                        process.env.CHROME_BIN ||
+                        '/usr/bin/google-chrome-stable' ||
+                        '/usr/bin/chromium-browser';
+      
+      if (chromePath && chromePath !== 'undefined') {
+        launchOptions.executablePath = chromePath;
+        console.log('📦 Using Chrome at:', chromePath);
+      } else {
+        console.log('📦 Using bundled Chromium');
       }
 
       this.browser = await puppeteerExtra.launch(launchOptions);
