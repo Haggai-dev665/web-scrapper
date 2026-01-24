@@ -42,21 +42,19 @@ export class ScraperService {
           '--disable-accelerated-2d-canvas',
           '--no-first-run',
           '--no-zygote',
-          '--disable-gpu',
-          '--single-process',
-          '--disable-features=IsolateOrigins,site-per-process'
+          '--disable-gpu'
         ]
       };
 
-      // On Heroku or when Chrome path is explicitly set, try to use it
-      const chromePath = process.env.PUPPETEER_EXECUTABLE_PATH;
-      
-      if (chromePath && chromePath !== 'undefined') {
-        launchOptions.executablePath = chromePath;
-        console.log('📦 Using Chrome at:', chromePath);
+      // On Heroku with Chrome buildpack, Chrome is at /app/.apt/usr/bin/google-chrome
+      if (process.env.GOOGLE_CHROME_BIN) {
+        launchOptions.executablePath = process.env.GOOGLE_CHROME_BIN;
+        console.log('📦 Using Chrome at:', process.env.GOOGLE_CHROME_BIN);
+      } else if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+        console.log('📦 Using Chrome at:', process.env.PUPPETEER_EXECUTABLE_PATH);
       } else {
         console.log('📦 Using bundled Chromium (Puppeteer default)');
-        // Don't set executablePath - let Puppeteer use its bundled Chromium
       }
 
       this.browser = await puppeteerExtra.launch(launchOptions);
