@@ -148,6 +148,7 @@ export interface ScrapedData {
   pageSizeKb: number;
   renderedHtml?: string;
   networkResources: NetworkResource[];
+  detailedNetworkRequests?: any[]; // Optional detailed network request data
   responseHeaders: { [key: string]: string };
   consoleLogs: ConsoleLog[];
   securityReport: SecurityReport;
