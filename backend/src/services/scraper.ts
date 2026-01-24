@@ -46,8 +46,11 @@ export class ScraperService {
         ]
       };
 
-      // On Heroku with Chrome buildpack, Chrome is at /app/.apt/usr/bin/google-chrome
-      if (process.env.GOOGLE_CHROME_BIN) {
+      // Chrome for Testing buildpack sets CHROME_BIN
+      if (process.env.CHROME_BIN) {
+        launchOptions.executablePath = process.env.CHROME_BIN;
+        console.log('📦 Using Chrome at:', process.env.CHROME_BIN);
+      } else if (process.env.GOOGLE_CHROME_BIN) {
         launchOptions.executablePath = process.env.GOOGLE_CHROME_BIN;
         console.log('📦 Using Chrome at:', process.env.GOOGLE_CHROME_BIN);
       } else if (process.env.PUPPETEER_EXECUTABLE_PATH) {
