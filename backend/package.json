@@ -4,10 +4,10 @@
   "description": "Advanced web scraper backend with Node.js and Puppeteer",
   "main": "dist/index.js",
   "scripts": {
+    "postinstall": "npx puppeteer browsers install chrome || echo 'Puppeteer browser installation skipped'",
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "postbuild": "node -e \"console.log('Puppeteer will download Chrome on first launch')\"",
     "test": "jest",
     "lint": "eslint src --ext .ts"
   },
