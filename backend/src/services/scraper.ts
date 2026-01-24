@@ -48,19 +48,15 @@ export class ScraperService {
         ]
       };
 
-      // Detect Chrome executable path for Heroku and other environments
-      const chromePath = process.env.PUPPETEER_EXECUTABLE_PATH || 
-                        process.env.CHROME_BIN ||
-                        process.env.GOOGLE_CHROME_BIN ||
-                        '/app/.apt/usr/bin/google-chrome-stable' ||
-                        '/usr/bin/google-chrome-stable' ||
-                        '/usr/bin/chromium-browser';
+      // On Heroku or when Chrome path is explicitly set, try to use it
+      const chromePath = process.env.PUPPETEER_EXECUTABLE_PATH;
       
       if (chromePath && chromePath !== 'undefined') {
         launchOptions.executablePath = chromePath;
         console.log('📦 Using Chrome at:', chromePath);
       } else {
-        console.log('📦 Using bundled Chromium');
+        console.log('📦 Using bundled Chromium (Puppeteer default)');
+        // Don't set executablePath - let Puppeteer use its bundled Chromium
       }
 
       this.browser = await puppeteerExtra.launch(launchOptions);
@@ -69,8 +65,7 @@ export class ScraperService {
     } catch (error) {
       this.initPromise = null;
       console.error('❌ Failed to launch Puppeteer browser:', error);
-      console.error('⚠️  Scraping will be unavailable. Make sure Chrome is installed.');
-      console.error('💡 On Heroku, add buildpack: heroku buildpacks:add jontewks/puppeteer');
+      console.error('⚠️  Scraping will be unavailable.');
       // Don't throw - let the server start without scraping capability
     }
   }
