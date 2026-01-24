@@ -9,10 +9,7 @@
     "build": "tsc",
     "test": "jest",
     "lint": "eslint src --ext .ts",
-    "postinstall": "echo 'Skipping Chromium download'"
-  },
-  "puppeteer": {
-    "skipDownload": true
+    "postinstall": "npx puppeteer browsers install chrome || echo 'Chrome installation skipped'"
   },
   "keywords": ["web-scraping", "puppeteer", "nodejs"],
   "author": "CHE HAGGAI",
