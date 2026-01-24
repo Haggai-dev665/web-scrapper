@@ -46,23 +46,22 @@ export class ScraperService {
         ]
       };
 
-      // Chrome for Testing buildpack sets CHROME_BIN
-      if (process.env.CHROME_BIN) {
-        launchOptions.executablePath = process.env.CHROME_BIN;
-        console.log('📦 Using Chrome at:', process.env.CHROME_BIN);
-      } else if (process.env.GOOGLE_CHROME_BIN) {
-        launchOptions.executablePath = process.env.GOOGLE_CHROME_BIN;
-        console.log('📦 Using Chrome at:', process.env.GOOGLE_CHROME_BIN);
-      } else if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-        launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
-        console.log('📦 Using Chrome at:', process.env.PUPPETEER_EXECUTABLE_PATH);
+      // Try various Chrome paths for different environments
+      const chromePath = process.env.CHROME_BIN || 
+                        process.env.GOOGLE_CHROME_BIN || 
+                        process.env.PUPPETEER_EXECUTABLE_PATH;
+      
+      if (chromePath) {
+        launchOptions.executablePath = chromePath;
+        console.log('📦 Using Chrome at:', chromePath);
       } else {
-        console.log('📦 Using bundled Chromium (Puppeteer default)');
+        // Let Puppeteer download Chromium automatically if not found
+        console.log('📦 Using Puppeteer managed Chromium');
       }
 
       this.browser = await puppeteerExtra.launch(launchOptions);
       this.initPromise = null;
-      console.log('✅ Puppeteer browser launched');
+      console.log('✅ Puppeteer browser launched successfully');
     } catch (error) {
       this.initPromise = null;
       console.error('❌ Failed to launch Puppeteer browser:', error);
