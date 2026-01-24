@@ -739,7 +739,7 @@ const WebScraper: React.FC = () => {
         const keys = await apiService.getApiKeys();
         setApiKeys(keys);
         // Auto-select the first active key if available
-        const activeKey = keys.find((key: any) => key.is_active);
+        const activeKey = keys.find((key: any) => key.isActive);
         if (activeKey) {
           setSelectedApiKey(activeKey.key);
         }
@@ -835,7 +835,7 @@ const WebScraper: React.FC = () => {
                   <option value="">Select an API key</option>
                   {apiKeys.map((key: any) => (
                     <option key={key.id} value={key.key}>
-                      {key.name} {key.is_active ? '' : '(Inactive)'}
+                      {key.name} {key.isActive ? '' : '(Inactive)'}
                     </option>
                   ))}
                 </APIKeySelect>

@@ -675,22 +675,22 @@ const DashboardHome: React.FC = () => {
       const dashboardData = await apiService.getDashboardStats();
       
       setStats({
-        totalRequests: dashboardData.total_requests_this_month || 0,
-        totalRequestsToday: dashboardData.total_requests_today || 0,
-        requestsRemaining: dashboardData.requests_remaining || 0,
-        activeKeys: dashboardData.active_api_keys || 0,
-        successRate: dashboardData.success_rate || 0,
-        avgResponseTime: dashboardData.avg_response_time_ms || 0
+        totalRequests: dashboardData.totalRequestsThisMonth || 0,
+        totalRequestsToday: dashboardData.totalRequestsToday || 0,
+        requestsRemaining: dashboardData.requestsRemaining || 0,
+        activeKeys: dashboardData.activeApiKeys || 0,
+        successRate: dashboardData.successRate || 0,
+        avgResponseTime: dashboardData.avgResponseTimeMs || 0
       });
       
       // Transform recent activity
-      const recentActivities = (dashboardData.recent_activity || []).slice(0, 6).map((activity: any, index: number) => {
+      const recentActivities = (dashboardData.recentActivity || []).slice(0, 6).map((activity: any, index: number) => {
         try {
-          const hostname = activity.url_scraped ? new URL(activity.url_scraped).hostname : '';
+          const hostname = activity.urlScraped ? new URL(activity.urlScraped).hostname : '';
           return {
             id: index + 1,
             type: activity.success ? 'success' : 'error',
-            text: activity.url_scraped 
+            text: activity.urlScraped 
               ? `Scraped ${hostname}`
               : `${activity.endpoint} request`,
             status: activity.success ? 'Completed' : 'Failed',
@@ -712,14 +712,14 @@ const DashboardHome: React.FC = () => {
       });
       
       setActivities(recentActivities);
-      setUsageData(dashboardData.usage_by_day || generateMockChartData());
+      setUsageData(dashboardData.usageByDay || generateMockChartData());
       
       // Extract and count top domains from recent activity
       const domainCounts: { [domain: string]: number } = {};
-      (dashboardData.recent_activity || []).forEach((activity: any) => {
-        if (activity.url_scraped) {
+      (dashboardData.recentActivity || []).forEach((activity: any) => {
+        if (activity.urlScraped) {
           try {
-            const hostname = new URL(activity.url_scraped).hostname;
+            const hostname = new URL(activity.urlScraped).hostname;
             domainCounts[hostname] = (domainCounts[hostname] || 0) + 1;
           } catch {
             // Invalid URL, skip

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import colors from '../theme/colors';
 import { FaGoogle, FaGithub } from 'react-icons/fa';
+import Logo from '../components/Logo';
 
 // Animations
 const fadeInUp = keyframes`
@@ -96,18 +97,10 @@ const BrandingContent = styled.div`
   max-width: 450px;
 `;
 
-const BrandLogo = styled.div`
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: ${colors.textLight};
+const LogoWrapper = styled.div`
   margin-bottom: 2rem;
-
-  span {
-    background: ${colors.gradientGlow};
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+  display: flex;
+  justify-content: center;
 `;
 
 const BrandTitle = styled.h1`
@@ -401,7 +394,9 @@ const LoginPage: React.FC = () => {
         <FloatingElement top="65%" left="80%" delay={3}>🌐</FloatingElement>
 
         <BrandingContent>
-          <BrandLogo>⚡ WebScraper<span>.live</span></BrandLogo>
+          <LogoWrapper>
+            <Logo size={80} />
+          </LogoWrapper>
           <BrandTitle>Extract Web Data with Enterprise-Grade Power</BrandTitle>
           <BrandDescription>
             Join thousands of developers who trust our platform for reliable, 

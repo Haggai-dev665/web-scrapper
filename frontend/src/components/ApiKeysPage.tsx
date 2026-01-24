@@ -657,7 +657,7 @@ const ApiKeysPage: React.FC = () => {
         created_at: key.created_at ? new Date(key.created_at).toLocaleDateString() : 'Unknown',
         last_used: key.last_used ? new Date(key.last_used).toLocaleDateString() : 'Never',
         requests_count: key.usage_count || 0,
-        status: key.active ? 'active' : 'inactive'
+        status: key.isActive ? 'active' : 'inactive'
       }));
       
       setApiKeys(transformedKeys);

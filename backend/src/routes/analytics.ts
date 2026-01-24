@@ -83,13 +83,26 @@ export const createAnalyticsRoutes = (db: DatabaseConnection): Router => {
 
       console.log('📝 Scraping history requested for user:', req.userId);
 
-      // For now, return empty history
-      const history = {
-        history: [],
-        total: 0
-      };
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const userObjectId = new ObjectId(req.userId);
 
-      res.status(200).json(history);
+      // Get usage logs from database
+      const logs = await db.getUsageLogsForUser(userObjectId, limit);
+
+      // Transform logs to history format
+      const history = logs.map(log => ({
+        timestamp: log.timestamp.toISOString(),
+        endpoint: log.endpoint,
+        urlScraped: log.urlScraped,
+        success: log.success,
+        responseTimeMs: log.responseTimeMs
+      }));
+
+      res.status(200).json({
+        history,
+        total: history.length
+      });
     } catch (error) {
       console.error('History error:', error);
       res.status(500).json({ 

@@ -9,6 +9,7 @@ import UsageAnalytics from '../components/UsageAnalytics';
 import SettingsPage from '../components/SettingsPage';
 import WebScraperPage from '../components/WebScraperPage';
 import ApiDocsPage from '../components/ApiDocsPage';
+import ScrapingHistory from '../components/ScrapingHistory';
 import colors from '../theme/colors';
 
 const fadeIn = keyframes`
@@ -100,12 +101,7 @@ const Dashboard: React.FC = () => {
       case 'scraper':
         return <WebScraperPage />;
       case 'history':
-        return (
-          <PlaceholderPage>
-            <h2>📋 Scraping History</h2>
-            <p>View your complete scraping history with detailed results and analytics.</p>
-          </PlaceholderPage>
-        );
+        return <ScrapingHistory />;
       case 'api-keys':
         return <ApiKeysPage />;
       case 'analytics':
@@ -114,14 +110,16 @@ const Dashboard: React.FC = () => {
         return (
           <PlaceholderPage>
             <h2>🌐 Network Analysis</h2>
-            <p>Analyze network requests, performance metrics, and resource loading for scraped websites.</p>
+            <p>View detailed network analysis in the Scraper page results tab after scraping a website.</p>
+            <p style={{ marginTop: '1rem', fontSize: '0.9rem' }}>Network requests, response times, and resource loading data are displayed in real-time after each scrape operation.</p>
           </PlaceholderPage>
         );
       case 'security':
         return (
           <PlaceholderPage>
             <h2>🔒 Security Reports</h2>
-            <p>Comprehensive security analysis including HTTPS status, headers, vulnerabilities, and recommendations.</p>
+            <p>View comprehensive security analysis in the Scraper page results tab after scraping a website.</p>
+            <p style={{ marginTop: '1rem', fontSize: '0.9rem' }}>Security headers, HTTPS status, vulnerabilities, and recommendations are analyzed automatically with each scrape.</p>
           </PlaceholderPage>
         );
       case 'documentation':

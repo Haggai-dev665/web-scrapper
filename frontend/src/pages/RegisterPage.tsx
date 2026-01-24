@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import colors from '../theme/colors';
 import { FaGoogle, FaGithub } from 'react-icons/fa';
+import Logo from '../components/Logo';
 
 // Animations
 const fadeInUp = keyframes`
@@ -96,18 +97,10 @@ const BrandingContent = styled.div`
   max-width: 450px;
 `;
 
-const BrandLogo = styled.div`
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: ${colors.textLight};
+const LogoWrapper = styled.div`
   margin-bottom: 2rem;
-
-  span {
-    background: ${colors.gradientGlow};
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+  display: flex;
+  justify-content: center;
 `;
 
 const BrandTitle = styled.h1`
@@ -544,7 +537,9 @@ const RegisterPage: React.FC = () => {
         <FloatingElement top="60%" left="85%" delay={3}>⚡</FloatingElement>
 
         <BrandingContent>
-          <BrandLogo>⚡ WebScraper<span>.live</span></BrandLogo>
+          <LogoWrapper>
+            <Logo size={80} />
+          </LogoWrapper>
           <BrandTitle>Start Your Web Scraping Journey Today</BrandTitle>
           <BrandDescription>
             Create your free account and get instant access to our powerful 

@@ -17,6 +17,7 @@ import {
   FiZap
 } from 'react-icons/fi';
 import colors from '../theme/colors';
+import LogoComponent from './Logo';
 
 const slideIn = keyframes`
   from { transform: translateX(-10px); opacity: 0; }
@@ -81,7 +82,8 @@ const SidebarContainer = styled.div<{ isOpen: boolean }>`
 `;
 
 const SidebarHeader = styled.div<{ isOpen: boolean }>`
-  padding: 1.5rem;
+  height: 80px;
+  padding: 0 1.5rem;
   border-bottom: 1px solid ${colors.border};
   display: flex;
   align-items: center;
@@ -97,49 +99,26 @@ const LogoContainer = styled.div<{ isOpen: boolean }>`
   align-items: center;
   gap: 0.75rem;
   animation: ${slideIn} 0.3s ease-out;
+  justify-content: ${props => props.isOpen ? 'flex-start' : 'center'};
+  height: 100%;
 `;
 
-const LogoIcon = styled.div`
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: ${colors.gradientPrimary};
+const LogoWrapper = styled.div<{ isOpen: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 1.25rem;
-  box-shadow: ${colors.shadowPrimary};
   flex-shrink: 0;
+  height: 100%;
+  
+  img {
+    height: 100%;
+    width: auto;
+    max-height: 60px;
+    object-fit: contain;
+  }
 `;
 
-const Logo = styled.div<{ isOpen: boolean }>`
-  display: ${props => props.isOpen ? 'flex' : 'none'};
-  flex-direction: column;
-  
-  .title {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: ${colors.textPrimary};
-    margin: 0;
-    line-height: 1.2;
-    
-    span {
-      background: ${colors.gradientPrimary};
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-  }
-  
-  .subtitle {
-    font-size: 0.7rem;
-    color: ${colors.textMuted};
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-`;
+
 
 const ToggleButton = styled.button`
   background: ${colors.backgroundSecondary};
@@ -454,13 +433,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       <SidebarContainer isOpen={isOpen}>
         <SidebarHeader isOpen={isOpen}>
           <LogoContainer isOpen={isOpen}>
-            <LogoIcon>
-              <FiZap />
-            </LogoIcon>
-            <Logo isOpen={isOpen}>
-              <div className="title">WebScraper<span>.live</span></div>
-              <div className="subtitle">Professional</div>
-            </Logo>
+            <LogoWrapper isOpen={isOpen}>
+              <LogoComponent size={60} />
+            </LogoWrapper>
           </LogoContainer>
           <ToggleButton onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? <FiChevronLeft /> : <FiChevronRight />}

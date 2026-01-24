@@ -2,6 +2,7 @@ import React from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Link } from 'react-router-dom';
 import colors from '../theme/colors';
+import Logo from '../components/Logo';
 
 // Modern Animations
 const fadeInUp = keyframes`
@@ -91,7 +92,8 @@ const Header = styled.header`
   left: 0;
   right: 0;
   z-index: 100;
-  padding: 1rem 2rem;
+  height: 80px;
+  padding: 0 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -101,25 +103,22 @@ const Header = styled.header`
   transition: all 0.3s ease;
 
   @media (max-width: 768px) {
-    padding: 1rem;
+    padding: 0 1rem;
+    height: 70px;
   }
 `;
 
-const Logo = styled(Link)`
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: ${colors.textLight};
-  text-decoration: none;
+const LogoLink = styled(Link)`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  letter-spacing: -0.02em;
-
-  span {
-    background: ${colors.gradientPrimary};
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  text-decoration: none;
+  height: 100%;
+  
+  img {
+    height: 100%;
+    width: auto;
+    max-height: 140px;
+    object-fit: contain;
   }
 `;
 
@@ -746,9 +745,9 @@ const LandingPage: React.FC = () => {
         <FloatingOrb size={150} top="30%" left="70%" delay={2} />
 
         <Header>
-          <Logo to="/">
-            ⚡ WebScraper<span>.live</span>
-          </Logo>
+          <LogoLink to="/">
+            <Logo size={140} />
+          </LogoLink>
           <Nav>
             <NavLink href="#features">Features</NavLink>
             <NavLink href="#technology">Technology</NavLink>
@@ -938,7 +937,7 @@ const LandingPage: React.FC = () => {
         <FooterContent>
           <FooterGrid>
             <FooterBrand>
-              <h3>⚡ WebScraper<span>.live</span></h3>
+              <Logo size={80} />
               <p>
                 Enterprise-grade web scraping platform with security analysis 
                 and performance monitoring built-in.
