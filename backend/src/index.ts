@@ -67,10 +67,13 @@ async function initializeServices() {
   authService = new AuthService(db);
   console.log('✅ Auth service initialized');
   
-  // Initialize scraper service
+  // Initialize scraper service (non-blocking)
   scraperService = new ScraperService();
-  await scraperService.initialize();
-  console.log('✅ Scraper service initialized');
+  // Don't await - let it initialize in background
+  scraperService.initialize().catch(err => {
+    console.error('⚠️  Scraper initialization failed (non-fatal):', err.message);
+  });
+  console.log('✅ Scraper service created');
 }
 
 // Health check endpoint

@@ -14,9 +14,23 @@ puppeteerExtra.use(StealthPlugin());
 
 export class ScraperService {
   private browser: Browser | null = null;
+  private initPromise: Promise<void> | null = null;
 
   async initialize(): Promise<void> {
-    if (!this.browser) {
+    if (this.initPromise) {
+      return this.initPromise;
+    }
+    
+    if (this.browser) {
+      return;
+    }
+
+    this.initPromise = this._doInitialize();
+    return this.initPromise;
+  }
+
+  private async _doInitialize(): Promise<void> {
+    try {
       console.log('🚀 Launching Puppeteer browser...');
       
       const launchOptions: any = {
@@ -34,9 +48,11 @@ export class ScraperService {
         ]
       };
 
-      // Detect Chrome executable path for different environments
+      // Detect Chrome executable path for Heroku and other environments
       const chromePath = process.env.PUPPETEER_EXECUTABLE_PATH || 
                         process.env.CHROME_BIN ||
+                        process.env.GOOGLE_CHROME_BIN ||
+                        '/app/.apt/usr/bin/google-chrome-stable' ||
                         '/usr/bin/google-chrome-stable' ||
                         '/usr/bin/chromium-browser';
       
@@ -48,7 +64,14 @@ export class ScraperService {
       }
 
       this.browser = await puppeteerExtra.launch(launchOptions);
+      this.initPromise = null;
       console.log('✅ Puppeteer browser launched');
+    } catch (error) {
+      this.initPromise = null;
+      console.error('❌ Failed to launch Puppeteer browser:', error);
+      console.error('⚠️  Scraping will be unavailable. Make sure Chrome is installed.');
+      console.error('💡 On Heroku, add buildpack: heroku buildpacks:add jontewks/puppeteer');
+      // Don't throw - let the server start without scraping capability
     }
   }
 
@@ -68,7 +91,7 @@ export class ScraperService {
     await this.initialize();
 
     if (!this.browser) {
-      throw new Error('Browser not initialized');
+      throw new Error('Browser not initialized. Chrome may not be installed. On Heroku, add buildpack: heroku buildpacks:add jontewks/puppeteer');
     }
 
     const page = await this.browser.newPage();
