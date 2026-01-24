@@ -106,6 +106,12 @@ export class AuthService {
       throw new Error('Invalid email or password');
     }
 
+    // Check if passwordHash exists
+    if (!user.passwordHash) {
+      console.error('User found but passwordHash is missing:', { email: user.email, fields: Object.keys(user) });
+      throw new Error('Account setup incomplete. Please contact support or re-register.');
+    }
+
     // Verify password
     const isValidPassword = await bcrypt.compare(request.password, user.passwordHash);
     if (!isValidPassword) {

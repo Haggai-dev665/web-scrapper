@@ -3,25 +3,7 @@ import styled, { keyframes } from 'styled-components';
 import { Link } from 'react-router-dom';
 import colors from '../theme/colors';
 
-// Animations
-const glow = keyframes`
-  0% { text-shadow: 0 0 20px ${colors.turquoise}; }
-  50% { text-shadow: 0 0 30px ${colors.turquoise}, 0 0 40px ${colors.lightTurquoise}; }
-  100% { text-shadow: 0 0 20px ${colors.turquoise}; }
-`;
-
-const pulseGlow = keyframes`
-  0% { box-shadow: 0 0 20px ${colors.turquoise}40; }
-  50% { box-shadow: 0 0 40px ${colors.turquoise}60, 0 0 60px ${colors.lightTurquoise}40; }
-  100% { box-shadow: 0 0 20px ${colors.turquoise}40; }
-`;
-
-const float = keyframes`
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-`;
-
+// Modern Animations
 const fadeInUp = keyframes`
   from {
     opacity: 0;
@@ -33,12 +15,32 @@ const fadeInUp = keyframes`
   }
 `;
 
+const pulse = keyframes`
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+`;
+
+const float = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+`;
+
+// Styled Components
 const LandingContainer = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, ${colors.cream} 0%, ${colors.backgroundSecondary} 30%, ${colors.cream} 70%, ${colors.backgroundTertiary} 100%);
+  background: ${colors.background};
+  overflow-x: hidden;
   position: relative;
+`;
+
+// Hero Section
+const HeroSection = styled.section`
+  min-height: 100vh;
+  background: ${colors.gradientHero};
+  position: relative;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  color: ${colors.brown};
 
   &::before {
     content: '';
@@ -48,89 +50,76 @@ const LandingContainer = styled.div`
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 20% 80%, ${colors.lightTurquoise}25 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, ${colors.turquoise}20 0%, transparent 50%),
-      radial-gradient(circle at 40% 40%, ${colors.lightGreen}15 0%, transparent 50%);
-    pointer-events: none;
-    animation: ${float} 20s ease-in-out infinite;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-      45deg,
-      transparent 30%,
-      ${colors.turquoise}03 50%,
-      transparent 70%
-    );
+      radial-gradient(circle at 20% 20%, ${colors.primary}15 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, ${colors.accent}10 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, ${colors.primaryGlow}05 0%, transparent 60%);
     pointer-events: none;
   }
 `;
 
-const AnimatedBackground = styled.div`
+const GridBackground = styled.div`
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.1;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    animation: float 6s ease-in-out infinite;
-    top: 10%;
-    left: 10%;
-  }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    animation: float 8s ease-in-out infinite reverse;
-    bottom: 20%;
-    right: 15%;
-  }
-  
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-30px); }
-  }
+  right: 0;
+  bottom: 0;
+  background-image: 
+    linear-gradient(${colors.secondaryLight}20 1px, transparent 1px),
+    linear-gradient(90deg, ${colors.secondaryLight}20 1px, transparent 1px);
+  background-size: 60px 60px;
+  opacity: 0.3;
+  pointer-events: none;
+`;
+
+const FloatingOrb = styled.div<{ size: number; top: string; left: string; delay: number }>`
+  position: absolute;
+  width: ${props => props.size}px;
+  height: ${props => props.size}px;
+  background: ${colors.gradientPrimary};
+  border-radius: 50%;
+  top: ${props => props.top};
+  left: ${props => props.left};
+  filter: blur(${props => props.size / 2}px);
+  opacity: 0.3;
+  animation: ${pulse} ${props => 4 + props.delay}s ease-in-out infinite;
+  animation-delay: ${props => props.delay}s;
 `;
 
 const Header = styled.header`
-  position: relative;
-  z-index: 10;
-  padding: 1.5rem 2rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: ${colors.secondary}95;
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid ${colors.secondaryLight}50;
+  transition: all 0.3s ease;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `;
 
-const Logo = styled.div`
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: ${colors.brown};
+const Logo = styled(Link)`
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: ${colors.textLight};
+  text-decoration: none;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  animation: ${glow} 3s ease-in-out infinite;
-  text-shadow: 0 0 15px ${colors.turquoise};
-  
-  &:hover {
-    animation-duration: 1s;
+  letter-spacing: -0.02em;
+
+  span {
+    background: ${colors.gradientPrimary};
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 `;
 
@@ -138,30 +127,33 @@ const Nav = styled.nav`
   display: flex;
   gap: 2rem;
   align-items: center;
+
+  @media (max-width: 968px) {
+    display: none;
+  }
 `;
 
-const NavLink = styled(Link)`
-  color: ${colors.textSecondary};
+const NavLink = styled.a`
+  color: ${colors.textMuted};
   text-decoration: none;
   font-weight: 500;
-  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
   position: relative;
-  
+
   &::after {
     content: '';
     position: absolute;
-    bottom: -5px;
+    bottom: -4px;
     left: 0;
     width: 0;
     height: 2px;
-    background: linear-gradient(90deg, ${colors.turquoise}, ${colors.lightTurquoise});
+    background: ${colors.gradientPrimary};
     transition: width 0.3s ease;
   }
-  
+
   &:hover {
-    color: ${colors.brown};
-    text-shadow: 0 0 15px ${colors.turquoise};
-    
+    color: ${colors.textLight};
     &::after {
       width: 100%;
     }
@@ -174,168 +166,340 @@ const AuthButtons = styled.div`
   align-items: center;
 `;
 
-const LoginButton = styled(Link)`
-  color: ${colors.brown};
+const LoginBtn = styled(Link)`
+  color: ${colors.textLight};
   text-decoration: none;
-  padding: 0.75rem 1.5rem;
-  border: 2px solid ${colors.brown};
-  border-radius: 30px;
   font-weight: 600;
-  transition: all 0.3s ease;
-  background: ${colors.white};
-  backdrop-filter: blur(10px);
-  
+  font-size: 0.95rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+
   &:hover {
-    background: ${colors.backgroundTertiary};
-    border-color: ${colors.turquoise};
-    box-shadow: 0 0 20px ${colors.turquoise}40;
-    color: ${colors.turquoise};
+    background: ${colors.secondaryLight};
   }
 `;
 
-const SignupButton = styled(Link)`
-  background: linear-gradient(45deg, ${colors.turquoise}, ${colors.lightTurquoise});
-  color: ${colors.white};
+const SignupBtn = styled(Link)`
+  background: ${colors.gradientPrimary};
+  color: ${colors.textLight};
   text-decoration: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 30px;
   font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
   transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-  border: 2px solid ${colors.turquoise}60;
-  animation: ${pulseGlow} 4s ease-in-out infinite;
-  
+  box-shadow: 0 4px 15px ${colors.shadowPrimary};
+
   &:hover {
-    background: linear-gradient(45deg, ${colors.lightTurquoise}, ${colors.turquoise});
     transform: translateY(-2px);
-    animation-duration: 1s;
-    text-shadow: 0 0 15px ${colors.white};
+    box-shadow: 0 8px 25px ${colors.shadowPrimary};
   }
 `;
 
-const HeroSection = styled.section`
-  position: relative;
-  z-index: 10;
+const HeroContent = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   text-align: center;
-  padding: 6rem 2rem;
-  color: ${colors.brown};
+  padding: 8rem 2rem 4rem;
   max-width: 1200px;
   margin: 0 auto;
+  position: relative;
+  z-index: 10;
+`;
+
+const HeroBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: ${colors.secondaryLight};
+  border: 1px solid ${colors.primary}40;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-size: 0.875rem;
+  color: ${colors.primaryLight};
+  margin-bottom: 2rem;
+  animation: ${fadeInUp} 0.6s ease-out;
+
+  &::before {
+    content: '✨';
+  }
 `;
 
 const HeroTitle = styled.h1`
-  font-size: 4rem;
-  font-weight: 700;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 800;
+  color: ${colors.textLight};
+  line-height: 1.1;
   margin-bottom: 1.5rem;
-  background: linear-gradient(45deg, ${colors.brown}, ${colors.turquoise}, ${colors.darkBrown});
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: ${glow} 4s ease-in-out infinite;
-  text-shadow: 0 0 30px ${colors.turquoise}60;
-  line-height: 1.2;
-  
-  @media (max-width: 768px) {
-    font-size: 2.8rem;
+  letter-spacing: -0.03em;
+  animation: ${fadeInUp} 0.6s ease-out 0.1s both;
+
+  span {
+    background: ${colors.gradientGlow};
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 `;
 
 const HeroSubtitle = styled.p`
-  font-size: 1.4rem;
-  margin-bottom: 3rem;
-  color: ${colors.textSecondary};
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: ${colors.textMuted};
+  max-width: 650px;
   line-height: 1.7;
-  text-shadow: 0 0 10px ${colors.turquoise}20;
-  animation: ${fadeInUp} 1s ease-out 0.5s both;
-  
-  @media (max-width: 768px) {
-    font-size: 1.2rem;
-  }
+  margin-bottom: 3rem;
+  animation: ${fadeInUp} 0.6s ease-out 0.2s both;
 `;
 
-const CTAButtons = styled.div`
+const CTAGroup = styled.div`
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
   justify-content: center;
-  margin-bottom: 4rem;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: center;
-  }
+  animation: ${fadeInUp} 0.6s ease-out 0.3s both;
 `;
 
-const PrimaryButton = styled(Link)`
-  background: linear-gradient(45deg, ${colors.turquoise}, ${colors.lightTurquoise});
-  color: ${colors.white};
+const PrimaryBtn = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: ${colors.gradientPrimary};
+  color: ${colors.textLight};
   text-decoration: none;
-  padding: 1.2rem 3rem;
-  border-radius: 50px;
-  font-weight: 700;
-  font-size: 1.2rem;
-  transition: all 0.3s ease;
-  border: 2px solid ${colors.turquoise}60;
-  animation: ${pulseGlow} 3s ease-in-out infinite;
-  text-shadow: 0 0 10px ${colors.white}60;
-  
-  &:hover {
-    transform: translateY(-5px) scale(1.05);
-    background: linear-gradient(45deg, ${colors.lightTurquoise}, ${colors.turquoise});
-    animation-duration: 0.5s;
-    text-shadow: 0 0 20px ${colors.white};
-  }
-`;
-
-const SecondaryButton = styled(Link)`
-  background: ${colors.white};
-  color: ${colors.brown};
-  text-decoration: none;
-  padding: 1.2rem 3rem;
-  border: 2px solid ${colors.brown};
-  border-radius: 50px;
   font-weight: 600;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
+  padding: 1rem 2rem;
+  border-radius: 12px;
   transition: all 0.3s ease;
-  backdrop-filter: blur(15px);
-  
+  box-shadow: 0 4px 20px ${colors.shadowPrimary};
+
   &:hover {
-    background: ${colors.backgroundTertiary};
-    border-color: ${colors.turquoise};
-    transform: translateY(-5px);
-    box-shadow: 0 0 25px ${colors.turquoise}40;
-    color: ${colors.turquoise};
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px ${colors.shadowPrimary};
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
   }
 `;
 
-const FeaturesSection = styled.section`
+const SecondaryBtn = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: ${colors.textLight};
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.1rem;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  border: 2px solid ${colors.secondaryLight};
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: ${colors.secondaryLight};
+    border-color: ${colors.primary};
+  }
+`;
+
+const HeroVisual = styled.div`
   position: relative;
-  z-index: 10;
-  padding: 4rem 2rem;
+  width: 100%;
+  max-width: 1000px;
+  margin: 4rem auto 0;
+  animation: ${fadeInUp} 0.8s ease-out 0.4s both;
+`;
+
+const DashboardPreview = styled.div`
+  background: ${colors.secondary};
+  border-radius: 16px;
+  border: 1px solid ${colors.secondaryLight};
+  overflow: hidden;
+  box-shadow: 
+    0 25px 50px -12px ${colors.shadowXl},
+    0 0 0 1px ${colors.secondaryLight};
+`;
+
+const PreviewHeader = styled.div`
+  height: 40px;
+  background: ${colors.secondaryDark};
+  border-bottom: 1px solid ${colors.secondaryLight};
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 8px;
+`;
+
+const WindowDot = styled.div<{ color: string }>`
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: ${props => props.color};
+`;
+
+const PreviewContent = styled.div`
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const PreviewCard = styled.div`
+  background: ${colors.secondaryLight};
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid ${colors.secondaryLight};
+
+  h4 {
+    color: ${colors.textMuted};
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+
+  .value {
+    color: ${colors.textLight};
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+
+  .change {
+    color: ${colors.success};
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+`;
+
+// Features Section
+const FeaturesSection = styled.section`
+  padding: 8rem 2rem;
+  background: ${colors.background};
+  position: relative;
+`;
+
+const SectionContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
 `;
 
+const SectionHeader = styled.div`
+  text-align: center;
+  margin-bottom: 4rem;
+`;
+
+const SectionLabel = styled.span`
+  display: inline-block;
+  color: ${colors.primary};
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 1rem;
+`;
+
+const SectionTitle = styled.h2`
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  color: ${colors.textPrimary};
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+`;
+
+const SectionSubtitle = styled.p`
+  font-size: 1.125rem;
+  color: ${colors.textSecondary};
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.7;
+`;
+
 const FeatureGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 2rem;
-  margin-top: 3rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const FeatureCard = styled.div`
-  background: linear-gradient(145deg, ${colors.charcoal}40, ${colors.raisinBlack}60);
-  backdrop-filter: blur(20px);
-  border-radius: 25px;
-  padding: 3rem;
-  text-align: center;
-  border: 1px solid ${colors.mutedBlue}40;
-  transition: all 0.4s ease;
+  background: ${colors.surface};
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid ${colors.border};
+  transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: ${colors.gradientPrimary};
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px ${colors.shadowLg};
+    border-color: ${colors.primary}30;
+
+    &::before {
+      transform: scaleX(1);
+    }
+  }
+`;
+
+const FeatureIconWrapper = styled.div`
+  width: 56px;
+  height: 56px;
+  background: ${colors.primary}15;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.75rem;
+`;
+
+const FeatureTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ${colors.textPrimary};
+  margin-bottom: 0.75rem;
+`;
+
+const FeatureDescription = styled.p`
+  color: ${colors.textSecondary};
+  line-height: 1.7;
+  font-size: 0.95rem;
+`;
+
+// Stats Section
+const StatsSection = styled.section`
+  padding: 6rem 2rem;
+  background: ${colors.gradientDark};
+  position: relative;
+  overflow: hidden;
+
   &::before {
     content: '';
     position: absolute;
@@ -343,454 +507,477 @@ const FeatureCard = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(45deg, transparent, ${colors.accent}10, transparent);
-    opacity: 0;
-    transition: opacity 0.4s ease;
+    background: 
+      radial-gradient(circle at 0% 50%, ${colors.primary}20 0%, transparent 50%),
+      radial-gradient(circle at 100% 50%, ${colors.accent}15 0%, transparent 50%);
   }
-  
-  &:hover {
-    transform: translateY(-15px) rotateY(5deg);
-    background: linear-gradient(145deg, ${colors.mutedBlue}30, ${colors.charcoal}50);
-    border-color: ${colors.accent}60;
-    box-shadow: 0 25px 60px ${colors.raisinBlack}80, 0 0 30px ${colors.accent}30;
-    
-    &::before {
-      opacity: 1;
-    }
-  }
-`;
-
-const FeatureIcon = styled.div`
-  font-size: 4rem;
-  margin-bottom: 1.5rem;
-  filter: drop-shadow(0 0 15px ${colors.accent}60);
-  animation: ${float} 6s ease-in-out infinite;
-  
-  &:hover {
-    animation-duration: 2s;
-  }
-`;
-
-const FeatureTitle = styled.h3`
-  color: ${colors.white};
-  font-size: 1.6rem;
-  margin-bottom: 1rem;
-  font-weight: 700;
-  text-shadow: 0 0 15px ${colors.accent}40;
-  
-  &:hover {
-    text-shadow: 0 0 20px ${colors.accent}80;
-    color: ${colors.lightBlue};
-  }
-`;
-
-const FeatureDescription = styled.p`
-  color: ${colors.gray};
-  line-height: 1.7;
-  font-size: 1rem;
-  text-shadow: 0 0 8px ${colors.mutedBlue}30;
-`;
-
-const SectionTitle = styled.h2`
-  color: ${colors.white};
-  font-size: 3rem;
-  text-align: center;
-  margin-bottom: 1rem;
-  font-weight: 700;
-  background: linear-gradient(45deg, ${colors.white}, ${colors.lightBlue});
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 20px ${colors.accent}50;
-  animation: ${glow} 5s ease-in-out infinite;
-`;
-
-const SectionSubtitle = styled.p`
-  color: ${colors.gray};
-  font-size: 1.3rem;
-  text-align: center;
-  max-width: 700px;
-  margin: 0 auto;
-  line-height: 1.6;
-  text-shadow: 0 0 10px ${colors.mutedBlue}40;
-`;
-
-const StatsSection = styled.section`
-  position: relative;
-  z-index: 10;
-  padding: 4rem 2rem;
-  text-align: center;
 `;
 
 const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 2rem;
-  max-width: 800px;
-  margin: 3rem auto 0;
+  gap: 3rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 10;
 `;
 
-const StatCard = styled.div`
-  background: linear-gradient(145deg, ${colors.charcoal}50, ${colors.raisinBlack}70);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 2.5rem;
-  border: 1px solid ${colors.mutedBlue}40;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    transform: translateY(-8px);
-    border-color: ${colors.accent}60;
-    box-shadow: 0 15px 40px ${colors.raisinBlack}80, 0 0 25px ${colors.accent}30;
-  }
+const StatItem = styled.div`
+  text-align: center;
 `;
 
-const StatNumber = styled.div`
-  color: ${colors.white};
-  font-size: 3rem;
-  font-weight: 700;
+const StatValue = styled.div`
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: ${colors.textLight};
   margin-bottom: 0.5rem;
-  text-shadow: 0 0 20px ${colors.accent}60;
-  background: linear-gradient(45deg, ${colors.white}, ${colors.lightBlue});
-  background-clip: text;
+  background: ${colors.gradientGlow};
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 `;
 
 const StatLabel = styled.div`
-  color: ${colors.gray};
-  font-size: 1.1rem;
+  font-size: 1rem;
+  color: ${colors.textMuted};
   font-weight: 500;
-  text-shadow: 0 0 8px ${colors.mutedBlue}40;
 `;
 
-const Footer = styled.footer`
+// Tech Stack Section
+const TechSection = styled.section`
+  padding: 6rem 2rem;
+  background: ${colors.backgroundSecondary};
+`;
+
+const TechGrid = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 3rem;
+`;
+
+const TechCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 2rem;
+  background: ${colors.surface};
+  border-radius: 12px;
+  border: 1px solid ${colors.border};
+  transition: all 0.3s ease;
+  min-width: 140px;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px ${colors.shadowMd};
+    border-color: ${colors.primary}40;
+  }
+
+  span {
+    font-size: 2rem;
+  }
+
+  p {
+    font-weight: 600;
+    color: ${colors.textPrimary};
+    font-size: 0.9rem;
+    margin: 0;
+  }
+`;
+
+// CTA Section
+const CTASection = styled.section`
+  padding: 8rem 2rem;
+  background: ${colors.background};
+  text-align: center;
+`;
+
+const CTACard = styled.div`
+  max-width: 800px;
+  margin: 0 auto;
+  background: ${colors.gradientDark};
+  border-radius: 24px;
+  padding: 4rem;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, ${colors.primary}30 0%, transparent 40%),
+      radial-gradient(circle at 80% 20%, ${colors.accent}20 0%, transparent 40%);
+  }
+`;
+
+const CTATitle = styled.h2`
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  color: ${colors.textLight};
+  margin-bottom: 1rem;
   position: relative;
   z-index: 10;
-  padding: 3rem 2rem 2rem;
-  text-align: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const CTADescription = styled.p`
+  font-size: 1.125rem;
+  color: ${colors.textMuted};
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 10;
+`;
+
+// Footer
+const Footer = styled.footer`
+  background: ${colors.secondaryDark};
+  padding: 4rem 2rem 2rem;
+  border-top: 1px solid ${colors.secondaryLight};
 `;
 
 const FooterContent = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  color: rgba(255, 255, 255, 0.7);
 `;
 
+const FooterGrid = styled.div`
+  display: grid;
+  grid-template-columns: 2fr repeat(3, 1fr);
+  gap: 4rem;
+  margin-bottom: 3rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+`;
+
+const FooterBrand = styled.div`
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: ${colors.textLight};
+    margin-bottom: 1rem;
+
+    span {
+      background: ${colors.gradientPrimary};
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  }
+
+  p {
+    color: ${colors.textMuted};
+    line-height: 1.7;
+    max-width: 300px;
+  }
+`;
+
+const FooterColumn = styled.div`
+  h4 {
+    color: ${colors.textLight};
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1.5rem;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  li {
+    margin-bottom: 0.75rem;
+  }
+
+  a {
+    color: ${colors.textMuted};
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: ${colors.primaryLight};
+    }
+  }
+`;
+
+const FooterBottom = styled.div`
+  border-top: 1px solid ${colors.secondaryLight};
+  padding-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  p {
+    color: ${colors.textMuted};
+    font-size: 0.875rem;
+    margin: 0;
+  }
+`;
+
+// Arrow Icon Component
+const ArrowIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+  </svg>
+);
+
+// Component
 const LandingPage: React.FC = () => {
   return (
     <LandingContainer>
-      <AnimatedBackground />
-      
-      <Header>
-        <Logo>
-          ⚡ WebScraper.live
-        </Logo>
-        <Nav>
-          <NavLink to="#features">🚀 Features</NavLink>
-          <NavLink to="#technology">🔧 Technology</NavLink>
-          <NavLink to="#pricing">💎 Pricing</NavLink>
-          <NavLink to="/api-docs">📚 API Docs</NavLink>
-        </Nav>
-        <AuthButtons>
-          <LoginButton to="/login">Login</LoginButton>
-          <SignupButton to="/register">Get Started</SignupButton>
-        </AuthButtons>
-      </Header>
-
       <HeroSection>
-        <HeroTitle>
-          Next-Generation Web Intelligence<br />
-          <span style={{ fontSize: '0.8em', color: colors.turquoise }}>Powered by Advanced AI & Security</span>
-        </HeroTitle>
-        <HeroSubtitle>
-          Unlock the full potential of web data with our enterprise-grade scraping platform. 
-          Extract, analyze, and secure insights from any website with military-grade precision. 
-          Built for developers, trusted by Fortune 500 companies worldwide.
-        </HeroSubtitle>
-        <CTAButtons>
-          <PrimaryButton to="/register">🚀 Start Your Journey</PrimaryButton>
-          <SecondaryButton to="/demo">🎬 Watch Demo</SecondaryButton>
-        </CTAButtons>
-        
-        <div style={{ 
-          marginTop: '4rem', 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          gap: '3rem',
-          flexWrap: 'wrap'
-        }}>
-          <img 
-            src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=100&h=60&fit=crop&crop=center" 
-            alt="Analytics Dashboard"
-            style={{ 
-              borderRadius: '10px', 
-              boxShadow: `0 10px 30px ${colors.raisinBlack}80`,
-              filter: `drop-shadow(0 0 15px ${colors.accent}40)`
-            }}
-          />
-          <img 
-            src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=100&h=60&fit=crop&crop=center" 
-            alt="Data Visualization"
-            style={{ 
-              borderRadius: '10px', 
-              boxShadow: `0 10px 30px ${colors.raisinBlack}80`,
-              filter: `drop-shadow(0 0 15px ${colors.lightBlue}40)`
-            }}
-          />
-          <img 
-            src="https://images.unsplash.com/photo-1563206767-5b18f218e8de?w=100&h=60&fit=crop&crop=center" 
-            alt="Security Analysis"
-            style={{ 
-              borderRadius: '10px', 
-              boxShadow: `0 10px 30px ${colors.raisinBlack}80`,
-              filter: `drop-shadow(0 0 15px ${colors.mutedBlue}40)`
-            }}
-          />
-        </div>
+        <GridBackground />
+        <FloatingOrb size={300} top="10%" left="5%" delay={0} />
+        <FloatingOrb size={200} top="60%" left="80%" delay={1} />
+        <FloatingOrb size={150} top="30%" left="70%" delay={2} />
+
+        <Header>
+          <Logo to="/">
+            ⚡ WebScraper<span>.live</span>
+          </Logo>
+          <Nav>
+            <NavLink href="#features">Features</NavLink>
+            <NavLink href="#technology">Technology</NavLink>
+            <NavLink href="#pricing">Pricing</NavLink>
+            <NavLink href="/api-docs">API Docs</NavLink>
+          </Nav>
+          <AuthButtons>
+            <LoginBtn to="/login">Sign In</LoginBtn>
+            <SignupBtn to="/register">Get Started</SignupBtn>
+          </AuthButtons>
+        </Header>
+
+        <HeroContent>
+          <HeroBadge>New: Advanced Security Analysis Available</HeroBadge>
+          <HeroTitle>
+            Extract Web Data<br />
+            <span>With Precision & Speed</span>
+          </HeroTitle>
+          <HeroSubtitle>
+            Enterprise-grade web scraping platform with built-in security analysis, 
+            performance metrics, and real-time monitoring. Built for developers 
+            who demand reliability.
+          </HeroSubtitle>
+          <CTAGroup>
+            <PrimaryBtn to="/register">
+              Start Free Trial
+              <ArrowIcon />
+            </PrimaryBtn>
+            <SecondaryBtn to="/dashboard">
+              View Dashboard
+            </SecondaryBtn>
+          </CTAGroup>
+
+          <HeroVisual>
+            <DashboardPreview>
+              <PreviewHeader>
+                <WindowDot color="#EF4444" />
+                <WindowDot color="#F59E0B" />
+                <WindowDot color="#10B981" />
+              </PreviewHeader>
+              <PreviewContent>
+                <PreviewCard>
+                  <h4>Total Requests</h4>
+                  <div className="value">24,521</div>
+                  <div className="change">↑ 12.5% this week</div>
+                </PreviewCard>
+                <PreviewCard>
+                  <h4>Success Rate</h4>
+                  <div className="value">99.8%</div>
+                  <div className="change">↑ 0.3% improvement</div>
+                </PreviewCard>
+                <PreviewCard>
+                  <h4>Avg Response</h4>
+                  <div className="value">142ms</div>
+                  <div className="change">↓ 18ms faster</div>
+                </PreviewCard>
+              </PreviewContent>
+            </DashboardPreview>
+          </HeroVisual>
+        </HeroContent>
       </HeroSection>
 
       <FeaturesSection id="features">
-        <SectionTitle>Revolutionary Web Intelligence Platform</SectionTitle>
-        <SectionSubtitle>
-          Experience the future of web scraping with our AI-powered platform that delivers unprecedented insights, 
-          security analysis, and performance metrics in real-time.
-        </SectionSubtitle>
-        
-        <FeatureGrid>
-          <FeatureCard>
-            <FeatureIcon>⚡</FeatureIcon>
-            <FeatureTitle>Quantum-Speed Processing</FeatureTitle>
-            <FeatureDescription>
-              Harness the power of distributed headless Chrome clusters with edge computing. 
-              Process millions of pages with sub-second response times and 99.99% accuracy rates.
-            </FeatureDescription>
-          </FeatureCard>
-          
-          <FeatureCard>
-            <FeatureIcon>🛡️</FeatureIcon>
-            <FeatureTitle>Military-Grade Security</FeatureTitle>
-            <FeatureDescription>
-              Advanced threat detection with real-time vulnerability scanning, SSL/TLS analysis, 
-              CSP validation, and comprehensive security posture assessment for every target.
-            </FeatureDescription>
-          </FeatureCard>
-          
-          <FeatureCard>
-            <FeatureIcon>🧠</FeatureIcon>
-            <FeatureTitle>AI-Powered Analytics</FeatureTitle>
-            <FeatureDescription>
-              Machine learning algorithms analyze Core Web Vitals, predict performance bottlenecks, 
-              and provide actionable optimization recommendations with precision insights.
-            </FeatureDescription>
-          </FeatureCard>
-          
-          <FeatureCard>
-            <FeatureIcon>🌐</FeatureIcon>
-            <FeatureTitle>Deep Network Intelligence</FeatureTitle>
-            <FeatureDescription>
-              Complete network topology mapping, request waterfall analysis, CDN optimization tracking, 
-              and real-time monitoring of third-party dependencies and data flows.
-            </FeatureDescription>
-          </FeatureCard>
-          
-          <FeatureCard>
-            <FeatureIcon>🎯</FeatureIcon>
-            <FeatureTitle>Intelligent Content Mining</FeatureTitle>
-            <FeatureDescription>
-              Advanced NLP algorithms extract structured data, sentiment analysis, entity recognition, 
-              SEO insights, and readability metrics with human-level accuracy.
-            </FeatureDescription>
-          </FeatureCard>
-          
-          <FeatureCard>
-            <FeatureIcon>📊</FeatureIcon>
-            <FeatureTitle>Enterprise Dashboard</FeatureTitle>
-            <FeatureDescription>
-              Real-time analytics with customizable widgets, API key lifecycle management, 
-              usage forecasting, billing optimization, and comprehensive audit trails.
-            </FeatureDescription>
-          </FeatureCard>
-          
-          <FeatureCard>
-            <FeatureIcon>🔄</FeatureIcon>
-            <FeatureTitle>Auto-Scaling Infrastructure</FeatureTitle>
-            <FeatureDescription>
-              Kubernetes-powered auto-scaling handles traffic spikes seamlessly. 
-              Global CDN ensures low-latency access from anywhere on the planet.
-            </FeatureDescription>
-          </FeatureCard>
-          
-          <FeatureCard>
-            <FeatureIcon>🎨</FeatureIcon>
-            <FeatureTitle>Visual Page Analysis</FeatureTitle>
-            <FeatureDescription>
-              Advanced screenshot analysis with element detection, visual regression testing, 
-              accessibility audits, and responsive design validation across devices.
-            </FeatureDescription>
-          </FeatureCard>
-          
-          <FeatureCard>
-            <FeatureIcon>🔐</FeatureIcon>
-            <FeatureTitle>Privacy & Compliance</FeatureTitle>
-            <FeatureDescription>
-              GDPR, CCPA, and SOC2 compliant with end-to-end encryption, data anonymization, 
-              audit logs, and configurable data retention policies for enterprise security.
-            </FeatureDescription>
-          </FeatureCard>
-        </FeatureGrid>
+        <SectionContainer>
+          <SectionHeader>
+            <SectionLabel>Features</SectionLabel>
+            <SectionTitle>Everything You Need to Extract Web Data</SectionTitle>
+            <SectionSubtitle>
+              Powerful tools and features designed for modern web scraping workflows
+            </SectionSubtitle>
+          </SectionHeader>
+
+          <FeatureGrid>
+            <FeatureCard>
+              <FeatureIconWrapper>⚡</FeatureIconWrapper>
+              <FeatureTitle>Lightning Fast Scraping</FeatureTitle>
+              <FeatureDescription>
+                Powered by headless Chrome with distributed processing. 
+                Handle thousands of requests with sub-second response times.
+              </FeatureDescription>
+            </FeatureCard>
+
+            <FeatureCard>
+              <FeatureIconWrapper>🛡️</FeatureIconWrapper>
+              <FeatureTitle>Security Analysis</FeatureTitle>
+              <FeatureDescription>
+                Comprehensive security scanning including HTTPS validation, 
+                security headers, CSP analysis, and vulnerability detection.
+              </FeatureDescription>
+            </FeatureCard>
+
+            <FeatureCard>
+              <FeatureIconWrapper>📊</FeatureIconWrapper>
+              <FeatureTitle>Performance Metrics</FeatureTitle>
+              <FeatureDescription>
+                Real-time Core Web Vitals monitoring, load time analysis, 
+                and performance optimization recommendations.
+              </FeatureDescription>
+            </FeatureCard>
+
+            <FeatureCard>
+              <FeatureIconWrapper>🌐</FeatureIconWrapper>
+              <FeatureTitle>Network Intelligence</FeatureTitle>
+              <FeatureDescription>
+                Complete network request tracking, resource analysis, 
+                and third-party dependency monitoring.
+              </FeatureDescription>
+            </FeatureCard>
+
+            <FeatureCard>
+              <FeatureIconWrapper>🔑</FeatureIconWrapper>
+              <FeatureTitle>API Key Management</FeatureTitle>
+              <FeatureDescription>
+                Create and manage multiple API keys with granular permissions, 
+                rate limiting, and usage analytics.
+              </FeatureDescription>
+            </FeatureCard>
+
+            <FeatureCard>
+              <FeatureIconWrapper>📈</FeatureIconWrapper>
+              <FeatureTitle>Usage Analytics</FeatureTitle>
+              <FeatureDescription>
+                Detailed dashboards with request history, success rates, 
+                response times, and usage trends over time.
+              </FeatureDescription>
+            </FeatureCard>
+          </FeatureGrid>
+        </SectionContainer>
       </FeaturesSection>
 
-      {/* Technology Showcase */}
-      <section style={{ 
-        padding: '6rem 2rem', 
-        background: `linear-gradient(180deg, ${colors.raisinBlack} 0%, ${colors.charcoal} 100%)`,
-        position: 'relative',
-        zIndex: 10
-      }}>
-        <SectionTitle>Powered by Cutting-Edge Technology</SectionTitle>
-        <SectionSubtitle>
-          Built on a foundation of enterprise-grade technologies for maximum performance and reliability
-        </SectionSubtitle>
-        
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-          gap: '2rem',
-          marginTop: '3rem',
-          maxWidth: '1000px',
-          margin: '3rem auto 0'
-        }}>
-          {[
-            { icon: '🦀', name: 'Rust Backend', desc: 'Memory-safe, ultra-fast processing' },
-            { icon: '🚀', name: 'React + Vite', desc: 'Lightning-fast frontend development' },
-            { icon: '🍃', name: 'MongoDB Atlas', desc: 'Globally distributed database' },
-            { icon: '☁️', name: 'Heroku Platform', desc: 'Scalable cloud infrastructure' },
-            { icon: '🤖', name: 'Headless Chrome', desc: 'Advanced browser automation' },
-            { icon: '🔧', name: 'TypeScript', desc: 'Type-safe development experience' }
-          ].map((tech, index) => (
-            <div key={index} style={{
-              background: `linear-gradient(145deg, ${colors.charcoal}60, ${colors.raisinBlack}80)`,
-              borderRadius: '20px',
-              padding: '2rem',
-              textAlign: 'center',
-              border: `1px solid ${colors.mutedBlue}40`,
-              transition: 'all 0.3s ease',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-10px)';
-              e.currentTarget.style.boxShadow = `0 20px 40px ${colors.accent}30`;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{tech.icon}</div>
-              <h4 style={{ 
-                color: colors.white, 
-                fontSize: '1.3rem', 
-                marginBottom: '0.5rem',
-                textShadow: `0 0 10px ${colors.accent}40`
-              }}>{tech.name}</h4>
-              <p style={{ color: colors.gray, fontSize: '0.9rem' }}>{tech.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       <StatsSection>
-        <SectionTitle>Trusted by Industry Leaders</SectionTitle>
-        <SectionSubtitle>
-          Join thousands of developers and enterprises who rely on our platform for mission-critical data extraction
-        </SectionSubtitle>
         <StatsGrid>
-          <StatCard>
-            <StatNumber>100M+</StatNumber>
-            <StatLabel>Pages Analyzed</StatLabel>
-          </StatCard>
-          <StatCard>
-            <StatNumber>50K+</StatNumber>
-            <StatLabel>Global Users</StatLabel>
-          </StatCard>
-          <StatCard>
-            <StatNumber>99.99%</StatNumber>
+          <StatItem>
+            <StatValue>10M+</StatValue>
+            <StatLabel>Pages Scraped</StatLabel>
+          </StatItem>
+          <StatItem>
+            <StatValue>99.9%</StatValue>
             <StatLabel>Uptime SLA</StatLabel>
-          </StatCard>
-          <StatCard>
-            <StatNumber>&lt; 100ms</StatNumber>
+          </StatItem>
+          <StatItem>
+            <StatValue>&lt;200ms</StatValue>
             <StatLabel>Avg Response</StatLabel>
-          </StatCard>
-          <StatCard>
-            <StatNumber>150+</StatNumber>
-            <StatLabel>Countries</StatLabel>
-          </StatCard>
-          <StatCard>
-            <StatNumber>24/7/365</StatNumber>
-            <StatLabel>Expert Support</StatLabel>
-          </StatCard>
+          </StatItem>
+          <StatItem>
+            <StatValue>5K+</StatValue>
+            <StatLabel>Active Users</StatLabel>
+          </StatItem>
         </StatsGrid>
       </StatsSection>
 
+      <TechSection id="technology">
+        <SectionContainer>
+          <SectionHeader>
+            <SectionLabel>Technology</SectionLabel>
+            <SectionTitle>Built With Modern Tech Stack</SectionTitle>
+            <SectionSubtitle>
+              Enterprise-grade infrastructure for reliability and performance
+            </SectionSubtitle>
+          </SectionHeader>
+
+          <TechGrid>
+            <TechCard><span>⚛️</span><p>React</p></TechCard>
+            <TechCard><span>📘</span><p>TypeScript</p></TechCard>
+            <TechCard><span>🟢</span><p>Node.js</p></TechCard>
+            <TechCard><span>🍃</span><p>MongoDB</p></TechCard>
+            <TechCard><span>🎭</span><p>Puppeteer</p></TechCard>
+            <TechCard><span>☁️</span><p>Cloud Deploy</p></TechCard>
+          </TechGrid>
+        </SectionContainer>
+      </TechSection>
+
+      <CTASection>
+        <CTACard>
+          <CTATitle>Ready to Start Scraping?</CTATitle>
+          <CTADescription>
+            Join thousands of developers using WebScraper.live to extract web data efficiently.
+          </CTADescription>
+          <PrimaryBtn to="/register" style={{ position: 'relative', zIndex: 10 }}>
+            Create Free Account
+            <ArrowIcon />
+          </PrimaryBtn>
+        </CTACard>
+      </CTASection>
+
       <Footer>
         <FooterContent>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-            gap: '2rem',
-            marginBottom: '2rem'
-          }}>
-            <div>
-              <h4 style={{ 
-                color: colors.white, 
-                marginBottom: '1rem',
-                textShadow: `0 0 10px ${colors.accent}40`
-              }}>Platform</h4>
-              <div style={{ color: colors.gray }}>
-                <div style={{ marginBottom: '0.5rem' }}>🌐 Global CDN</div>
-                <div style={{ marginBottom: '0.5rem' }}>🔒 Enterprise Security</div>
-                <div style={{ marginBottom: '0.5rem' }}>📊 Real-time Analytics</div>
-              </div>
-            </div>
-            <div>
-              <h4 style={{ 
-                color: colors.white, 
-                marginBottom: '1rem',
-                textShadow: `0 0 10px ${colors.accent}40`
-              }}>Developers</h4>
-              <div style={{ color: colors.gray }}>
-                <div style={{ marginBottom: '0.5rem' }}>📖 API Documentation</div>
-                <div style={{ marginBottom: '0.5rem' }}>🛠️ SDKs & Libraries</div>
-                <div style={{ marginBottom: '0.5rem' }}>💬 Community</div>
-              </div>
-            </div>
-            <div>
-              <h4 style={{ 
-                color: colors.white, 
-                marginBottom: '1rem',
-                textShadow: `0 0 10px ${colors.accent}40`
-              }}>Support</h4>
-              <div style={{ color: colors.gray }}>
-                <div style={{ marginBottom: '0.5rem' }}>🎧 24/7 Support</div>
-                <div style={{ marginBottom: '0.5rem' }}>📧 Contact Us</div>
-                <div style={{ marginBottom: '0.5rem' }}>🎓 Training</div>
-              </div>
-            </div>
-          </div>
-          <div style={{ 
-            borderTop: `1px solid ${colors.mutedBlue}40`, 
-            paddingTop: '2rem', 
-            textAlign: 'center' 
-          }}>
-            <p style={{ 
-              color: colors.gray,
-              textShadow: `0 0 8px ${colors.mutedBlue}30`
-            }}>
-              &copy; 2025 WebIntel Pro. All rights reserved. Built with ⚡ for the next generation of developers.
-            </p>
-          </div>
+          <FooterGrid>
+            <FooterBrand>
+              <h3>⚡ WebScraper<span>.live</span></h3>
+              <p>
+                Enterprise-grade web scraping platform with security analysis 
+                and performance monitoring built-in.
+              </p>
+            </FooterBrand>
+
+            <FooterColumn>
+              <h4>Product</h4>
+              <ul>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="/api-docs">API Docs</a></li>
+                <li><a href="#changelog">Changelog</a></li>
+              </ul>
+            </FooterColumn>
+
+            <FooterColumn>
+              <h4>Company</h4>
+              <ul>
+                <li><a href="#about">About</a></li>
+                <li><a href="#blog">Blog</a></li>
+                <li><a href="#careers">Careers</a></li>
+                <li><a href="#contact">Contact</a></li>
+              </ul>
+            </FooterColumn>
+
+            <FooterColumn>
+              <h4>Legal</h4>
+              <ul>
+                <li><a href="#privacy">Privacy</a></li>
+                <li><a href="#terms">Terms</a></li>
+                <li><a href="#security">Security</a></li>
+              </ul>
+            </FooterColumn>
+          </FooterGrid>
+
+          <FooterBottom>
+            <p>© 2025 WebScraper.live. All rights reserved.</p>
+          </FooterBottom>
         </FooterContent>
       </Footer>
     </LandingContainer>

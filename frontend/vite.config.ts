@@ -22,7 +22,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'https://webscrap-9f292cec4bcc.herokuapp.com',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
       },

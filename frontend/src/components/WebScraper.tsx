@@ -3,28 +3,7 @@ import styled, { keyframes } from 'styled-components';
 import { apiService } from '../services/api';
 import { useToast } from './Toast';
 import Loader from './Loader';
-
-// Modern Color Palette
-const colors = {
-  primary: '#6366F1',
-  primaryDark: '#4F46E5',
-  primaryLight: '#A5B4FC',
-  background: '#FFFFFF',
-  backgroundSecondary: '#F8FAFC',
-  backgroundTertiary: '#F1F5F9',
-  textPrimary: '#0F172A',
-  textSecondary: '#475569',
-  textMuted: '#94A3B8',
-  success: '#10B981',
-  warning: '#F59E0B',
-  error: '#EF4444',
-  info: '#3B82F6',
-  border: '#E2E8F0',
-  borderLight: '#F1F5F9',
-  shadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-  shadowMd: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-  shadowLg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-};
+import colors from '../theme/colors';
 
 // Animation keyframes
 const fadeIn = keyframes`
@@ -1429,16 +1408,33 @@ const WebScraper: React.FC = () => {
                     Captured {result.console_logs.length} console message(s) during page load
                   </div>
                   <ListContainer>
-                    {result.console_logs.map((log, index) => (
-                      <ListItem key={index} style={{ 
-                        fontFamily: 'Monaco, Consolas, "Courier New", monospace',
-                        backgroundColor: '#f8fafc',
-                        borderLeft: `3px solid ${log.includes('Error') || log.includes('error') ? '#ef4444' : 
-                                                 log.includes('Warning') || log.includes('warn') ? '#f59e0b' : '#10b981'}`
-                      }}>
-                        {log}
-                      </ListItem>
-                    ))}
+                    {result.console_logs.map((log, index) => {
+                      const logMessage = typeof log === 'string' ? log : log.message;
+                      const logLevel = typeof log === 'object' && log.level ? log.level : 'log';
+                      
+                      return (
+                        <ListItem key={index} style={{ 
+                          fontFamily: 'Monaco, Consolas, "Courier New", monospace',
+                          backgroundColor: '#f8fafc',
+                          borderLeft: `3px solid ${
+                            logLevel === 'error' || logMessage.toLowerCase().includes('error') ? '#ef4444' : 
+                            logLevel === 'warning' || logLevel === 'warn' || logMessage.toLowerCase().includes('warn') ? '#f59e0b' : 
+                            '#10b981'
+                          }`
+                        }}>
+                          <span style={{ 
+                            fontWeight: 'bold', 
+                            marginRight: '0.5rem',
+                            color: logLevel === 'error' ? '#ef4444' : 
+                                   logLevel === 'warning' || logLevel === 'warn' ? '#f59e0b' : 
+                                   '#10b981'
+                          }}>
+                            [{logLevel.toUpperCase()}]
+                          </span>
+                          {logMessage}
+                        </ListItem>
+                      );
+                    })}
                   </ListContainer>
                 </div>
               ) : (

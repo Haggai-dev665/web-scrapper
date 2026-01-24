@@ -77,12 +77,15 @@ export class ScraperService {
       const networkResources: NetworkResource[] = [];
       const consoleLogs: ConsoleLog[] = [];
       const responseHeaders: { [key: string]: string } = {};
+      const detailedNetworkRequests: any[] = []; // Store detailed request info
 
-      // Listen to network requests
+      // Listen to network requests with more detail
       page.on('response', async (response) => {
         try {
           const request = response.request();
           const timing = response.timing();
+          const status = response.status();
+          const headers = response.headers();
           
           networkResources.push({
             name: request.url(),
@@ -93,9 +96,19 @@ export class ScraperService {
             encodedBodySize: undefined
           });
 
+          // Store detailed network request info
+          detailedNetworkRequests.push({
+            url: request.url(),
+            method: request.method(),
+            status: status,
+            responseTimeMs: timing ? timing.receiveHeadersEnd : 0,
+            sizeBytes: 0, // Will be estimated
+            contentType: headers['content-type'] || request.resourceType(),
+            headers: headers
+          });
+
           // Capture response headers from main page
           if (request.url() === url) {
-            const headers = response.headers();
             Object.keys(headers).forEach(key => {
               responseHeaders[key] = headers[key];
             });
@@ -113,10 +126,14 @@ export class ScraperService {
         });
       });
 
+      // Set longer timeout for page operations
+      page.setDefaultNavigationTimeout(90000);
+      page.setDefaultTimeout(90000);
+
       // Navigate to page with timeout
       const response = await page.goto(url, {
         waitUntil: 'networkidle2',
-        timeout: 30000
+        timeout: 90000
       });
 
       if (!response) {
@@ -251,7 +268,7 @@ export class ScraperService {
 
       const responseTime = Date.now() - startTime;
 
-      const scrapedData: ScrapedData = {
+      const scrapedData: any = {
         url,
         title: pageData.title,
         description: pageData.description,
@@ -271,6 +288,7 @@ export class ScraperService {
         pageSizeKb,
         renderedHtml: pageData.htmlContent,
         networkResources,
+        detailedNetworkRequests, // Add detailed network requests
         responseHeaders,
         consoleLogs,
         securityReport

@@ -31,7 +31,7 @@ export const useAuth = () => {
   return context;
 };
 
-const API_BASE_URL = 'https://webscrap-9f292cec4bcc.herokuapp.com';
+const API_BASE_URL = 'https://webscrap-6f95e72052c4.herokuapp.com';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);

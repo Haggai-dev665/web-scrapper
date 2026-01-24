@@ -1,55 +1,93 @@
-// Updated color palette based on project requirements
+// Modern Tech-Focused Color Palette - No Purple
 export const colors = {
-  // Primary colors from requirements
-  cream: '#F4EBE8',       // Light cream background
-  turquoise: '#29E7CD',   // Bright turquoise accent
-  brown: '#6A3E37',       // Dark brown
-  lightGreen: '#DBEBE5',  // Light mint green
-  offWhite: '#E8EBE7',    // Off-white/light gray
+  // Primary Colors - Deep Teal/Cyan Tech Theme
+  primary: '#0D9488',        // Teal 600 - Primary brand color
+  primaryLight: '#14B8A6',   // Teal 500 - Lighter variant
+  primaryDark: '#0F766E',    // Teal 700 - Darker variant
+  primaryGlow: '#5EEAD4',    // Teal 300 - Glow effects
   
-  // Complementary colors for gradients and accents
-  darkBrown: '#4A2B26',   // Darker brown for depth
-  lightTurquoise: '#7FEFDB', // Lighter turquoise
-  darkTurquoise: '#1BC0AB',  // Darker turquoise
+  // Secondary Colors - Slate Gray Professional
+  secondary: '#1E293B',      // Slate 800 - Dark backgrounds
+  secondaryLight: '#334155', // Slate 700 - Lighter dark
+  secondaryDark: '#0F172A',  // Slate 900 - Deepest dark
   
-  // System colors
+  // Accent Colors - Electric Cyan
+  accent: '#06B6D4',         // Cyan 500 - Accent highlights
+  accentLight: '#22D3EE',    // Cyan 400 - Light accent
+  accentDark: '#0891B2',     // Cyan 600 - Dark accent
+  
+  // Background Colors - Clean & Light
+  background: '#F8FAFC',     // Slate 50 - Main background
+  backgroundSecondary: '#F1F5F9', // Slate 100 - Secondary bg
+  backgroundTertiary: '#E2E8F0',  // Slate 200 - Tertiary bg
+  backgroundDark: '#0F172A', // Slate 900 - Dark mode bg
+  
+  // Surface Colors
+  surface: '#FFFFFF',        // Pure white surfaces
+  surfaceHover: '#F8FAFC',   // Hover state
+  surfaceActive: '#F1F5F9',  // Active state
+  
+  // Text Colors
+  textPrimary: '#0F172A',    // Slate 900 - Primary text
+  textSecondary: '#475569',  // Slate 600 - Secondary text
+  textMuted: '#94A3B8',      // Slate 400 - Muted text
+  textLight: '#FFFFFF',      // White text
+  textAccent: '#0D9488',     // Teal text
+  
+  // Status Colors
+  success: '#10B981',        // Emerald 500
+  successLight: '#D1FAE5',   // Emerald 100
+  successDark: '#059669',    // Emerald 600
+  
+  warning: '#F59E0B',        // Amber 500
+  warningLight: '#FEF3C7',   // Amber 100
+  warningDark: '#D97706',    // Amber 600
+  
+  error: '#EF4444',          // Red 500
+  errorLight: '#FEE2E2',     // Red 100
+  errorDark: '#DC2626',      // Red 600
+  
+  info: '#0EA5E9',           // Sky 500
+  infoLight: '#E0F2FE',      // Sky 100
+  infoDark: '#0284C7',       // Sky 600
+  
+  // Border Colors
+  border: '#E2E8F0',         // Slate 200
+  borderLight: '#F1F5F9',    // Slate 100
+  borderDark: '#CBD5E1',     // Slate 300
+  borderFocus: '#0D9488',    // Teal focus
+  
+  // Shadow Colors
+  shadow: 'rgba(15, 23, 42, 0.04)',
+  shadowMd: 'rgba(15, 23, 42, 0.08)',
+  shadowLg: 'rgba(15, 23, 42, 0.12)',
+  shadowXl: 'rgba(15, 23, 42, 0.16)',
+  shadowPrimary: 'rgba(13, 148, 136, 0.25)',
+  
+  // Gradient Definitions
+  gradientPrimary: 'linear-gradient(135deg, #0D9488 0%, #06B6D4 100%)',
+  gradientDark: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+  gradientLight: 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%)',
+  gradientGlow: 'linear-gradient(135deg, #14B8A6 0%, #22D3EE 100%)',
+  gradientHero: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)',
+  
+  // Legacy compatibility (mapping old names)
+  cream: '#F8FAFC',
+  turquoise: '#0D9488',
+  brown: '#0F172A',
+  lightGreen: '#D1FAE5',
+  offWhite: '#F1F5F9',
+  darkBrown: '#0F172A',
+  lightTurquoise: '#14B8A6',
+  darkTurquoise: '#0F766E',
   white: '#FFFFFF',
-  black: '#1A1A1A',
-  
-  // Backward compatibility aliases
-  accent: '#29E7CD',       // Maps to turquoise
-  lightBlue: '#7FEFDB',    // Maps to lightTurquoise
-  gray: '#A89892',         // Maps to textMuted
-  charcoal: '#6A3E37',     // Maps to brown
-  raisinBlack: '#4A2B26',  // Maps to darkBrown
-  mutedBlue: '#8B6B66',    // Maps to textSecondary
-  darkGray: '#2A2A2A',     // Dark gray for backgrounds
-  
-  // Status colors (adjusted to fit palette)
-  success: '#29E7CD',
-  warning: '#F4A261',
-  error: '#E63946',
-  info: '#29E7CD',
-  
-  // Text colors
-  textPrimary: '#6A3E37',
-  textSecondary: '#8B6B66',
-  textMuted: '#A89892',
-  textLight: '#FFFFFF',
-  
-  // Backgrounds
-  background: '#F4EBE8',
-  backgroundSecondary: '#DBEBE5',
-  backgroundTertiary: '#E8EBE7',
-  
-  // Borders
-  border: '#D4C4BF',
-  borderLight: '#E8E0DC',
-  
-  // Shadows
-  shadow: 'rgba(106, 62, 55, 0.08)',
-  shadowMd: 'rgba(106, 62, 55, 0.12)',
-  shadowLg: 'rgba(106, 62, 55, 0.16)',
+  black: '#0F172A',
+  charcoal: '#1E293B',
+  raisinBlack: '#0F172A',
+  mutedBlue: '#475569',
+  darkGray: '#1E293B',
+  gray: '#94A3B8',
+  lightBlue: '#22D3EE',
 };
 
 export default colors;

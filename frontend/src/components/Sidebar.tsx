@@ -1,13 +1,11 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { 
   FiHome, 
   FiGlobe, 
   FiKey, 
   FiBarChart2, 
   FiSettings,
-  FiMenu,
-  FiX,
   FiUser,
   FiStar,
   FiActivity,
@@ -15,9 +13,15 @@ import {
   FiClock,
   FiFileText,
   FiChevronLeft,
-  FiChevronRight
+  FiChevronRight,
+  FiZap
 } from 'react-icons/fi';
 import colors from '../theme/colors';
+
+const slideIn = keyframes`
+  from { transform: translateX(-10px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+`;
 
 const Overlay = styled.div<{ isOpen: boolean }>`
   position: fixed;
@@ -25,7 +29,8 @@ const Overlay = styled.div<{ isOpen: boolean }>`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
   z-index: 999;
   opacity: ${props => props.isOpen ? 1 : 0};
   visibility: ${props => props.isOpen ? 'visible' : 'hidden'};
@@ -42,17 +47,15 @@ const SidebarContainer = styled.div<{ isOpen: boolean }>`
   top: 0;
   height: 100vh;
   width: ${props => props.isOpen ? '280px' : '80px'};
-  background: ${colors.white};
-  border-right: 2px solid ${colors.border};
+  background: ${colors.surface};
+  border-right: 1px solid ${colors.border};
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
-  box-shadow: 0 4px 15px ${colors.shadow};
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
   
-  /* Hide scrollbar for Chrome, Safari and Opera */
   &::-webkit-scrollbar {
     width: 4px;
   }
@@ -66,7 +69,6 @@ const SidebarContainer = styled.div<{ isOpen: boolean }>`
     border-radius: 2px;
   }
   
-  /* Hide scrollbar for IE, Edge and Firefox */
   -ms-overflow-style: none;
   scrollbar-width: thin;
   scrollbar-color: ${colors.border} transparent;
@@ -74,43 +76,41 @@ const SidebarContainer = styled.div<{ isOpen: boolean }>`
   @media (max-width: 1024px) {
     width: ${props => props.isOpen ? '280px' : '0'};
     transform: translateX(${props => props.isOpen ? '0' : '-100%'});
-    box-shadow: ${props => props.isOpen ? '4px 0 15px rgba(0, 0, 0, 0.1)' : 'none'};
-  }
-  
-  @media (max-width: 768px) {
-    width: ${props => props.isOpen ? '280px' : '0'};
-    transform: translateX(${props => props.isOpen ? '0' : '-100%'});
-    box-shadow: ${props => props.isOpen ? '4px 0 15px rgba(0, 0, 0, 0.1)' : 'none'};
+    box-shadow: ${props => props.isOpen ? '4px 0 30px rgba(0, 0, 0, 0.15)' : 'none'};
   }
 `;
 
 const SidebarHeader = styled.div<{ isOpen: boolean }>`
-  padding: 2rem 1.5rem 1.5rem;
+  padding: 1.5rem;
   border-bottom: 1px solid ${colors.border};
   display: flex;
   align-items: center;
   justify-content: ${props => props.isOpen ? 'space-between' : 'center'};
-  background: ${colors.background};
+  background: ${colors.surface};
+  position: sticky;
+  top: 0;
+  z-index: 10;
 `;
 
 const LogoContainer = styled.div<{ isOpen: boolean }>`
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  animation: ${slideIn} 0.3s ease-out;
 `;
 
 const LogoIcon = styled.div`
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 12px;
-  background: linear-gradient(135deg, ${colors.turquoise} 0%, ${colors.darkTurquoise} 100%);
+  background: ${colors.gradientPrimary};
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-size: 1.25rem;
-  font-weight: bold;
-  box-shadow: 0 4px 12px ${colors.shadow};
+  box-shadow: ${colors.shadowPrimary};
+  flex-shrink: 0;
 `;
 
 const Logo = styled.div<{ isOpen: boolean }>`
@@ -120,24 +120,32 @@ const Logo = styled.div<{ isOpen: boolean }>`
   .title {
     font-size: 1.125rem;
     font-weight: 700;
-    color: ${colors.brown};
+    color: ${colors.textPrimary};
     margin: 0;
     line-height: 1.2;
+    
+    span {
+      background: ${colors.gradientPrimary};
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
   }
   
   .subtitle {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: ${colors.textMuted};
     font-weight: 500;
-    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 `;
 
 const ToggleButton = styled.button`
-  background: none;
-  border: none;
+  background: ${colors.backgroundSecondary};
+  border: 1px solid ${colors.border};
   color: ${colors.textSecondary};
-  font-size: 1.125rem;
+  font-size: 1rem;
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 8px;
@@ -147,14 +155,27 @@ const ToggleButton = styled.button`
   justify-content: center;
   
   &:hover {
-    background-color: ${colors.backgroundTertiary};
-    color: ${colors.textPrimary};
+    background: ${colors.primary}10;
+    border-color: ${colors.primary};
+    color: ${colors.primary};
   }
 `;
 
+const NavSection = styled.div`
+  padding: 1rem 0;
+`;
+
+const NavSectionTitle = styled.div<{ isOpen: boolean }>`
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: ${colors.textMuted};
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.5rem 1.5rem;
+  display: ${props => props.isOpen ? 'block' : 'none'};
+`;
+
 const NavList = styled.nav`
-  padding: 1.5rem 0;
-  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -163,33 +184,37 @@ const NavList = styled.nav`
 const NavItem = styled.div<{ active: boolean; isOpen: boolean }>`
   display: flex;
   align-items: center;
-  margin: 0 1rem;
-  padding: 0.875rem ${props => props.isOpen ? '1rem' : '1.25rem'};
+  margin: 0 0.75rem;
+  padding: 0.75rem ${props => props.isOpen ? '1rem' : '1rem'};
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 12px;
-  background-color: ${props => props.active ? colors.turquoise : 'transparent'};
-  color: ${props => props.active ? 'white' : colors.textSecondary};
+  border-radius: 10px;
+  background: ${props => props.active ? colors.primary : 'transparent'};
+  color: ${props => props.active ? colors.textLight : colors.textSecondary};
   position: relative;
+  justify-content: ${props => props.isOpen ? 'flex-start' : 'center'};
   
   &:hover {
-    background-color: ${props => props.active ? colors.darkTurquoise : colors.backgroundTertiary};
-    color: ${props => props.active ? 'white' : colors.brown};
-    transform: translateY(-1px);
-    box-shadow: ${props => props.active ? `0 4px 12px ${colors.turquoise}40` : colors.shadow};
+    background: ${props => props.active ? colors.primaryDark : colors.backgroundSecondary};
+    color: ${props => props.active ? colors.textLight : colors.primary};
   }
+  
+  ${props => props.active && `
+    box-shadow: 0 4px 12px ${colors.primary}40;
+  `}
   
   .icon {
     font-size: 1.125rem;
-    margin-right: ${props => props.isOpen ? '0.875rem' : '0'};
-    min-width: 18px;
+    margin-right: ${props => props.isOpen ? '0.75rem' : '0'};
+    min-width: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
   }
   
   .label {
-    font-weight: 600;
+    font-weight: 500;
     font-size: 0.875rem;
     display: ${props => props.isOpen ? 'block' : 'none'};
     white-space: nowrap;
@@ -197,18 +222,24 @@ const NavItem = styled.div<{ active: boolean; isOpen: boolean }>`
   
   .badge {
     margin-left: auto;
-    background: ${colors.warning};
+    background: ${colors.accent};
     color: white;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
-    padding: 0.25rem 0.5rem;
-    border-radius: 6px;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
     display: ${props => props.isOpen ? 'block' : 'none'};
   }
 `;
 
+const Divider = styled.div`
+  height: 1px;
+  background: ${colors.border};
+  margin: 0.75rem 1.5rem;
+`;
+
 const UserSection = styled.div<{ isOpen: boolean }>`
-  padding: 1.5rem;
+  padding: 1rem;
   border-top: 1px solid ${colors.border};
   background: ${colors.backgroundSecondary};
   margin-top: auto;
@@ -219,10 +250,11 @@ const UserInfo = styled.div<{ isOpen: boolean }>`
   align-items: center;
   padding: ${props => props.isOpen ? '0.75rem' : '0.5rem'};
   border-radius: 12px;
-  background: ${colors.background};
+  background: ${colors.surface};
   border: 1px solid ${colors.border};
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  justify-content: ${props => props.isOpen ? 'flex-start' : 'center'};
   
   &:hover {
     border-color: ${colors.primary};
@@ -230,23 +262,24 @@ const UserInfo = styled.div<{ isOpen: boolean }>`
   }
   
   .avatar {
-    width: ${props => props.isOpen ? '40px' : '32px'};
-    height: ${props => props.isOpen ? '40px' : '32px'};
+    width: ${props => props.isOpen ? '38px' : '32px'};
+    height: ${props => props.isOpen ? '38px' : '32px'};
     border-radius: 10px;
-    background: linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%);
+    background: ${colors.gradientPrimary};
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: ${props => props.isOpen ? '1rem' : '0.875rem'};
+    font-weight: 600;
+    font-size: ${props => props.isOpen ? '0.875rem' : '0.75rem'};
     color: white;
-    margin-right: ${props => props.isOpen ? '0.875rem' : '0'};
-    box-shadow: ${colors.shadow};
+    margin-right: ${props => props.isOpen ? '0.75rem' : '0'};
+    flex-shrink: 0;
   }
   
   .info {
     flex: 1;
     display: ${props => props.isOpen ? 'block' : 'none'};
+    min-width: 0;
     
     .name {
       font-size: 0.875rem;
@@ -254,6 +287,9 @@ const UserInfo = styled.div<{ isOpen: boolean }>`
       color: ${colors.textPrimary};
       margin-bottom: 0.125rem;
       line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     .tier {
@@ -262,10 +298,11 @@ const UserInfo = styled.div<{ isOpen: boolean }>`
       gap: 0.25rem;
       font-size: 0.75rem;
       font-weight: 500;
-      color: ${colors.warning};
+      color: ${colors.primary};
       
       .crown {
-        font-size: 0.875rem;
+        font-size: 0.75rem;
+        color: ${colors.accent};
       }
     }
   }
@@ -277,6 +314,72 @@ const UserInfo = styled.div<{ isOpen: boolean }>`
     background: ${colors.success};
     display: ${props => props.isOpen ? 'block' : 'none'};
     margin-left: auto;
+    box-shadow: 0 0 0 2px ${colors.successLight};
+  }
+`;
+
+const UpgradeCard = styled.div<{ isOpen: boolean }>`
+  display: ${props => props.isOpen ? 'block' : 'none'};
+  background: ${colors.gradientHero};
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem 1rem 0.75rem;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: ${colors.primary}20;
+    border-radius: 50%;
+  }
+  
+  .icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: ${colors.primary};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-bottom: 0.75rem;
+  }
+  
+  .title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: ${colors.textLight};
+    margin-bottom: 0.25rem;
+  }
+  
+  .description {
+    font-size: 0.75rem;
+    color: ${colors.textMuted};
+    line-height: 1.4;
+    margin-bottom: 0.75rem;
+  }
+  
+  .button {
+    display: inline-block;
+    background: ${colors.primary};
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    
+    &:hover {
+      background: ${colors.primaryDark};
+      transform: translateY(-1px);
+    }
   }
 `;
 
@@ -292,15 +395,24 @@ interface SidebarProps {
   } | null;
 }
 
-const navItems = [
+const mainNavItems = [
   { id: 'home', label: 'Dashboard', icon: FiHome },
   { id: 'scraper', label: 'Web Scraper', icon: FiGlobe },
-  { id: 'history', label: 'History', icon: FiClock },
-  { id: 'api-keys', label: 'API Keys', icon: FiKey },
-  { id: 'analytics', label: 'Analytics', icon: FiBarChart2 },
+  { id: 'history', label: 'History', icon: FiClock, badge: 'New' },
+];
+
+const analyticsNavItems = [
+  { id: 'analytics', label: 'Usage Analytics', icon: FiBarChart2 },
   { id: 'network', label: 'Network Analysis', icon: FiActivity },
   { id: 'security', label: 'Security Reports', icon: FiShield },
-  { id: 'documentation', label: 'Docs', icon: FiFileText },
+];
+
+const developerNavItems = [
+  { id: 'api-keys', label: 'API Keys', icon: FiKey },
+  { id: 'documentation', label: 'Documentation', icon: FiFileText },
+];
+
+const settingsNavItems = [
   { id: 'settings', label: 'Settings', icon: FiSettings },
 ];
 
@@ -314,6 +426,28 @@ const Sidebar: React.FC<SidebarProps> = ({
   const displayName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User' : 'Guest';
   const subscriptionTier = user?.subscription_tier || 'Free';
   
+  const renderNavItems = (items: typeof mainNavItems) => (
+    <NavList>
+      {items.map((item) => {
+        const IconComponent = item.icon;
+        return (
+          <NavItem
+            key={item.id}
+            active={currentPage === item.id}
+            isOpen={isOpen}
+            onClick={() => setCurrentPage(item.id)}
+          >
+            <IconComponent className="icon" />
+            <span className="label">{item.label}</span>
+            {'badge' in item && item.badge && (
+              <span className="badge">{item.badge}</span>
+            )}
+          </NavItem>
+        );
+      })}
+    </NavList>
+  );
+  
   return (
     <>
       <Overlay isOpen={isOpen} onClick={() => setIsOpen(false)} />
@@ -321,10 +455,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         <SidebarHeader isOpen={isOpen}>
           <LogoContainer isOpen={isOpen}>
             <LogoIcon>
-              <FiGlobe />
+              <FiZap />
             </LogoIcon>
             <Logo isOpen={isOpen}>
-              <div className="title">WebScraper</div>
+              <div className="title">WebScraper<span>.live</span></div>
               <div className="subtitle">Professional</div>
             </Logo>
           </LogoContainer>
@@ -333,22 +467,35 @@ const Sidebar: React.FC<SidebarProps> = ({
           </ToggleButton>
         </SidebarHeader>
         
-        <NavList>
-          {navItems.map((item) => {
-            const IconComponent = item.icon;
-            return (
-              <NavItem
-                key={item.id}
-                active={currentPage === item.id}
-                isOpen={isOpen}
-                onClick={() => setCurrentPage(item.id)}
-              >
-                <IconComponent className="icon" />
-                <span className="label">{item.label}</span>
-              </NavItem>
-            );
-          })}
-        </NavList>
+        <NavSection>
+          <NavSectionTitle isOpen={isOpen}>Main</NavSectionTitle>
+          {renderNavItems(mainNavItems)}
+        </NavSection>
+        
+        <NavSection>
+          <NavSectionTitle isOpen={isOpen}>Analytics</NavSectionTitle>
+          {renderNavItems(analyticsNavItems)}
+        </NavSection>
+        
+        <NavSection>
+          <NavSectionTitle isOpen={isOpen}>Developer</NavSectionTitle>
+          {renderNavItems(developerNavItems)}
+        </NavSection>
+        
+        <Divider />
+        
+        {renderNavItems(settingsNavItems)}
+        
+        <UpgradeCard isOpen={isOpen}>
+          <div className="icon">
+            <FiZap />
+          </div>
+          <div className="title">Upgrade to Pro</div>
+          <div className="description">
+            Get unlimited scraping, priority support, and advanced analytics.
+          </div>
+          <button className="button">Upgrade Now</button>
+        </UpgradeCard>
         
         <UserSection isOpen={isOpen}>
           <UserInfo isOpen={isOpen}>

@@ -26,7 +26,9 @@ const allowedOrigins = [
   process.env.FRONTEND_URL || 'https://webscrap-9f292cec4bcc.herokuapp.com',
   'https://webscrap-9f292cec4bcc.herokuapp.com',
   'https://webscrapper.live',
-  'https://www.webscrapper.live'
+  'https://www.webscrapper.live',
+  'http://localhost:3000',
+  'https://webscrap-6f95e72052c4.herokuapp.com/'
 ].filter(Boolean);
 
 app.use(cors({

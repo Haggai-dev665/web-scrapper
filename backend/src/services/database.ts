@@ -12,7 +12,11 @@ export class DatabaseConnection {
 
   static async create(): Promise<DatabaseConnection> {
     const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-    const client = new MongoClient(mongoUri);
+    const client = new MongoClient(mongoUri, {
+      serverSelectionTimeoutMS: 60000,
+      connectTimeoutMS: 60000,
+      socketTimeoutMS: 60000,
+    });
     
     await client.connect();
     const db = client.db('web_scraper');
