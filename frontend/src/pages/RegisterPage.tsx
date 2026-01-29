@@ -169,16 +169,31 @@ const RightPanel = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 2rem;
+  padding: 1.25rem;
   background: ${colors.surface};
   overflow-y: auto;
+  min-height: 100vh;
+  
+  @media (min-width: 769px) {
+    padding: 2rem;
+  }
+  
+  @media (max-width: 968px) {
+    justify-content: flex-start;
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+  }
 `;
 
 const FormContainer = styled.div`
   width: 100%;
   max-width: 460px;
   animation: ${fadeInUp} 0.5s ease-out;
-  padding: 1rem 0;
+  padding: 0;
+  
+  @media (max-width: 968px) {
+    max-width: 100%;
+  }
 `;
 
 const BackLink = styled(Link)`
@@ -189,11 +204,21 @@ const BackLink = styled(Link)`
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 500;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
   transition: color 0.2s ease;
 
   &:hover {
     color: ${colors.primary};
+  }
+`;
+
+const MobileLogoWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  
+  @media (min-width: 969px) {
+    display: none;
   }
 `;
 
@@ -214,9 +239,14 @@ const FormSubtitle = styled.p`
 `;
 
 const OAuthSection = styled.div`
-  display: flex;
-  gap: 1rem;
+  display: flex;\n  flex-direction: column;
+  gap: 0.75rem;
   margin-bottom: 1.25rem;
+  
+  @media (min-width: 480px) {
+    flex-direction: row;
+    gap: 1rem;
+  }
 `;
 
 const OAuthButton = styled.button<{ provider: 'google' | 'github' }>`
@@ -561,6 +591,10 @@ const RegisterPage: React.FC = () => {
 
       <RightPanel>
         <FormContainer>
+          <MobileLogoWrapper>
+            <Logo size={60} />
+          </MobileLogoWrapper>
+          
           <BackLink to="/">
             ← Back to home
           </BackLink>

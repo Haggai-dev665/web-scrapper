@@ -1,54 +1,52 @@
-import React, { useState, useEffect } from 'react';
-import styled, { keyframes } from 'styled-components';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import styled, { keyframes, css } from 'styled-components';
 import { apiService } from '../services/api';
 import { useToast } from './Toast';
-import Loader from './Loader';
 import colors from '../theme/colors';
+import { 
+  FiSearch, FiLoader, FiDownload, FiExternalLink, FiChevronDown, 
+  FiChevronRight, FiAlertCircle, FiCheckCircle, FiGlobe, FiLock,
+  FiImage, FiLink, FiActivity, FiShield, FiZap, FiTerminal, FiFileText
+} from 'react-icons/fi';
 
-// Animation keyframes
+// ============ ANIMATIONS ============
 const fadeIn = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 `;
 
-const slideInLeft = keyframes`
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+const fadeInUp = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 `;
 
-const scaleIn = keyframes`
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+const pulse = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 `;
 
 const shimmer = keyframes`
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 `;
 
-// Types
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
+const progressPulse = keyframes`
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 95%; }
+`;
+
+const scaleIn = keyframes`
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+`;
+
+// ============ TYPES ============
 interface NetworkRequest {
   url: string;
   method: string;
@@ -57,6 +55,15 @@ interface NetworkRequest {
   size_bytes: number;
   content_type: string;
   headers: Record<string, string>;
+}
+
+interface SecurityReport {
+  is_https: boolean;
+  mixed_content: boolean;
+  missing_security_headers: string[];
+  insecure_cookies: boolean;
+  csp?: string;
+  notes: string[];
 }
 
 interface SecurityAnalysis {
@@ -70,15 +77,6 @@ interface SecurityAnalysis {
   recommendations: string[];
 }
 
-interface SecurityReport {
-  is_https: boolean;
-  mixed_content: boolean;
-  missing_security_headers: string[];
-  insecure_cookies: boolean;
-  csp?: string;
-  notes: string[];
-}
-
 interface PerformanceMetrics {
   total_load_time_ms: number;
   dom_ready_time_ms: number;
@@ -87,6 +85,19 @@ interface PerformanceMetrics {
   cumulative_layout_shift: number;
   total_requests: number;
   total_size_kb: number;
+}
+
+interface LinkInfo {
+  text: string;
+  href: string;
+  is_external: boolean;
+}
+
+interface ImageInfo {
+  alt: string;
+  src: string;
+  width?: string;
+  height?: string;
 }
 
 interface ScrapedData {
@@ -111,148 +122,87 @@ interface ScrapedData {
   network_resources?: any[];
   console_logs?: any[];
   security_analysis?: SecurityAnalysis;
-  security_report?: SecurityReport;  // Add both for compatibility
+  security_report?: SecurityReport;
   performance_metrics?: PerformanceMetrics;
   cookies?: Record<string, string>;
   response_headers: Record<string, string>;
   rendered_html?: string;
 }
 
-interface LinkInfo {
-  text: string;
-  href: string;
-  is_external: boolean;
-}
+// ============ STYLED COMPONENTS ============
 
-interface ImageInfo {
-  alt: string;
-  src: string;
-  width?: string;
-  height?: string;
-}
-
-interface ScrapeResponse {
-  success: boolean;
-  data?: ScrapedData;
-  error?: string;
-}
-
-// Styled Components
-const ScraperContainer = styled.div`
+// Container
+const Container = styled.div`
   max-width: 100%;
-  padding: 0;
-  background: ${colors.backgroundSecondary};
   min-height: calc(100vh - 140px);
+  background: ${colors.backgroundSecondary};
   color: ${colors.textPrimary};
 `;
 
-const PageHeader = styled.div`
-  margin-bottom: 2rem;
-  
-  h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    color: ${colors.textPrimary};
-    margin: 0 0 0.5rem 0;
-    line-height: 1.2;
-  }
-  
-  p {
-    font-size: 1rem;
-    color: ${colors.textSecondary};
-    margin: 0;
-    line-height: 1.5;
-  }
-`;
-
-const InputSection = styled.div`
+// Input Section
+const InputCard = styled.div`
   background: ${colors.background};
-  border-radius: 20px;
-  padding: 2.5rem;
-  box-shadow: ${colors.shadowLg};
-  margin-bottom: 2rem;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid ${colors.border};
-  position: relative;
+  margin-bottom: 1.5rem;
+  animation: ${fadeIn} 0.3s ease-out;
   
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, ${colors.primary} 0%, ${colors.info} 50%, ${colors.success} 100%);
-    border-radius: 20px 20px 0 0;
+  @media (min-width: 768px) {
+    padding: 2rem;
   }
 `;
 
-const SectionTitle = styled.h2`
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: ${colors.textPrimary};
-  margin: 0 0 1.5rem 0;
+const InputRow = styled.div`
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 1rem;
   
-  &::before {
-    content: '';
-    width: 4px;
-    height: 24px;
-    background: ${colors.primary};
-    border-radius: 2px;
-  }
-`;
-
-const InputGroup = styled.div`
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 1.5rem;
-  align-items: end;
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+  @media (min-width: 768px) {
+    flex-direction: row;
+    align-items: flex-end;
     gap: 1rem;
   }
 `;
 
-const InputWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+const InputGroup = styled.div`
+  flex: 1;
+  min-width: 0;
 `;
 
 const Label = styled.label`
   display: block;
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: ${colors.textPrimary};
-  font-size: 0.875rem;
+  color: ${colors.textSecondary};
   margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
 `;
 
 const URLInput = styled.input`
   width: 100%;
-  padding: 1rem 1.25rem;
+  padding: 0.875rem 1rem;
   border: 2px solid ${colors.border};
-  border-radius: 12px;
+  border-radius: 10px;
   font-size: 1rem;
   background: ${colors.backgroundSecondary};
   color: ${colors.textPrimary};
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   font-family: inherit;
   
   &:focus {
     outline: none;
     border-color: ${colors.primary};
     background: ${colors.background};
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
   }
   
   &:disabled {
     background-color: ${colors.backgroundTertiary};
     cursor: not-allowed;
     opacity: 0.6;
-    border-color: ${colors.borderLight};
   }
   
   &::placeholder {
@@ -262,21 +212,27 @@ const URLInput = styled.input`
 
 const APIKeySelect = styled.select`
   width: 100%;
-  padding: 1rem 1.25rem;
+  padding: 0.875rem 1rem;
   border: 2px solid ${colors.border};
-  border-radius: 12px;
-  font-size: 0.875rem;
+  border-radius: 10px;
+  font-size: 0.9375rem;
   background: ${colors.backgroundSecondary};
   color: ${colors.textPrimary};
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   font-family: inherit;
   cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1.25rem;
+  padding-right: 2.5rem;
   
   &:focus {
     outline: none;
     border-color: ${colors.primary};
-    background: ${colors.background};
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    background-color: ${colors.background};
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
   }
   
   &:disabled {
@@ -284,222 +240,398 @@ const APIKeySelect = styled.select`
     cursor: not-allowed;
     opacity: 0.6;
   }
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 1rem;
   
-  @media (max-width: 768px) {
-    width: 100%;
+  @media (min-width: 768px) {
+    width: 220px;
   }
 `;
 
-const ScrapeButton = styled.button`
-  padding: 1rem 2rem;
-  background: linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 160px;
-  box-shadow: ${colors.shadowMd};
+const ScrapeButton = styled.button<{ $loading?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.625rem;
+  padding: 0.875rem 1.75rem;
+  background: linear-gradient(135deg, ${colors.primary} 0%, #4f46e5 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 160px;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  white-space: nowrap;
   
   &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: ${colors.shadowLg};
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
   }
   
   &:active:not(:disabled) {
-    transform: translateY(0px);
+    transform: translateY(0);
   }
   
   &:disabled {
     background: ${colors.textMuted};
     cursor: not-allowed;
+    box-shadow: none;
     transform: none;
-    box-shadow: ${colors.shadow};
   }
   
-  @media (max-width: 768px) {
+  svg {
+    ${props => props.$loading && css`animation: ${spin} 1s linear infinite;`}
+  }
+  
+  @media (max-width: 767px) {
     width: 100%;
-  }
-`;
-
-const LoadingSpinner = styled.div`
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: #ffffff;
-  animation: spin 1s ease-in-out infinite;
-  
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-`;
-
-const ResultsContainer = styled.div`
-  background: ${colors.background};
-  border-radius: 20px;
-  padding: 2.5rem;
-  box-shadow: ${colors.shadowLg};
-  border: 1px solid ${colors.border};
-  position: relative;
-  animation: ${fadeIn} 0.5s ease-out;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, ${colors.success} 0%, ${colors.info} 50%, ${colors.primary} 100%);
-    border-radius: 20px 20px 0 0;
-  }
-`;
-
-const ErrorMessage = styled.div`
-  background: rgba(239, 68, 68, 0.05);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 12px;
-  padding: 1.25rem;
-  color: ${colors.error};
-  font-weight: 500;
-  margin-top: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-`;
-
-const SuccessHeader = styled.div`
-  border-bottom: 2px solid ${colors.border};
-  padding-bottom: 1.5rem;
-  margin-bottom: 2rem;
-  background: linear-gradient(135deg, ${colors.backgroundSecondary} 0%, ${colors.backgroundTertiary} 100%);
-  padding: 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 2rem;
-`;
-
-const SiteTitle = styled.h2`
-  margin: 0 0 0.75rem 0;
-  color: ${colors.textPrimary};
-  font-size: 1.5rem;
-  font-weight: 700;
-`;
-
-const SiteURL = styled.p`
-  margin: 0;
-  color: ${colors.textSecondary};
-  font-size: 0.875rem;
-  word-break: break-all;
-`;
-
-const MetricsRow = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 1.5rem;
-  margin: 2rem 0;
-
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const MetricCard = styled.div`
-  background: ${colors.backgroundSecondary};
-  border: 1px solid ${colors.border};
-  border-radius: 16px;
-  padding: 1.5rem;
-  text-align: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: ${scaleIn} 0.5s ease-out;
-  animation-fill-mode: both;
-  
-  &:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: ${colors.shadowLg};
-    border-color: ${colors.primary};
-  }
-
-  @media (max-width: 768px) {
     padding: 1rem;
   }
 `;
 
-const MetricValue = styled.div`
-  font-size: 2rem;
-  font-weight: 700;
-  color: ${colors.primary};
+// Loading States
+const LoadingContainer = styled.div`
+  background: ${colors.background};
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid ${colors.border};
+  text-align: center;
+  animation: ${fadeIn} 0.3s ease-out;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 48px;
+  height: 48px;
+  border: 3px solid ${colors.border};
+  border-top-color: ${colors.primary};
+  border-radius: 50%;
+  animation: ${spin} 0.8s linear infinite;
+  margin: 0 auto 1.5rem;
+`;
+
+const LoadingTitle = styled.h3`
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: ${colors.textPrimary};
+  margin: 0 0 0.5rem;
+`;
+
+const LoadingSubtitle = styled.p`
+  font-size: 0.875rem;
+  color: ${colors.textSecondary};
+  margin: 0 0 1.5rem;
+`;
+
+const ProgressBarContainer = styled.div`
+  width: 100%;
+  max-width: 300px;
+  height: 4px;
+  background: ${colors.border};
+  border-radius: 2px;
+  margin: 0 auto;
+  overflow: hidden;
+`;
+
+const ProgressBarFill = styled.div`
+  height: 100%;
+  background: linear-gradient(90deg, ${colors.primary}, ${colors.info});
+  border-radius: 2px;
+  animation: ${progressPulse} 2.5s ease-in-out infinite;
+`;
+
+const LoadingSteps = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+`;
+
+const LoadingStep = styled.span<{ $active?: boolean; $complete?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: ${props => props.$complete ? 'rgba(16, 185, 129, 0.1)' : props.$active ? 'rgba(99, 102, 241, 0.1)' : colors.backgroundSecondary};
+  border: 1px solid ${props => props.$complete ? 'rgba(16, 185, 129, 0.3)' : props.$active ? 'rgba(99, 102, 241, 0.3)' : colors.border};
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: ${props => props.$complete ? colors.success : props.$active ? colors.primary : colors.textSecondary};
+  
+  svg {
+    font-size: 0.875rem;
+    ${props => props.$active && !props.$complete && css`animation: ${pulse} 1.5s ease-in-out infinite;`}
+  }
+`;
+
+// Skeleton Loaders
+const SkeletonBase = styled.div`
+  background: linear-gradient(90deg, ${colors.border} 25%, ${colors.backgroundSecondary} 50%, ${colors.border} 75%);
+  background-size: 200% 100%;
+  animation: ${shimmer} 1.5s ease-in-out infinite;
+  border-radius: 8px;
+`;
+
+const SkeletonText = styled(SkeletonBase)<{ $width?: string; $height?: string }>`
+  height: ${props => props.$height || '1rem'};
+  width: ${props => props.$width || '100%'};
   margin-bottom: 0.5rem;
 `;
 
-const MetricLabel = styled.div`
-  font-size: 0.875rem;
+const SkeletonCard = styled(SkeletonBase)`
+  height: 120px;
+  border-radius: 12px;
+`;
+
+// Error Message
+const ErrorContainer = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  animation: ${fadeIn} 0.3s ease-out;
+  
+  svg {
+    color: ${colors.error};
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+  }
+`;
+
+const ErrorText = styled.div`
+  flex: 1;
+  
+  strong {
+    display: block;
+    color: ${colors.error};
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  
+  span {
+    color: ${colors.textSecondary};
+    font-size: 0.875rem;
+  }
+`;
+
+// Results Container
+const ResultsCard = styled.div`
+  background: ${colors.background};
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid ${colors.border};
+  overflow: hidden;
+  animation: ${fadeInUp} 0.4s ease-out;
+`;
+
+const ResultsHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, ${colors.backgroundSecondary} 0%, ${colors.background} 100%);
+  border-bottom: 1px solid ${colors.border};
+  
+  @media (min-width: 640px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+`;
+
+const SiteInfo = styled.div`
+  min-width: 0;
+  flex: 1;
+`;
+
+const SiteTitle = styled.h2`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ${colors.textPrimary};
+  margin: 0 0 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  
+  @media (min-width: 640px) {
+    font-size: 1.375rem;
+  }
+`;
+
+const SiteURL = styled.p`
+  margin: 0;
+  font-size: 0.8125rem;
   color: ${colors.textSecondary};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const ExportButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: ${colors.backgroundSecondary};
+  border: 1px solid ${colors.border};
+  border-radius: 8px;
+  font-size: 0.8125rem;
   font-weight: 600;
+  color: ${colors.textPrimary};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  
+  &:hover {
+    background: ${colors.primary};
+    border-color: ${colors.primary};
+    color: white;
+  }
+  
+  svg {
+    font-size: 1rem;
+  }
+`;
+
+// Metrics Grid
+const MetricsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  background: ${colors.backgroundSecondary};
+  
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(6, 1fr);
+  }
+`;
+
+const MetricItem = styled.div<{ $delay?: number }>`
+  background: ${colors.background};
+  border: 1px solid ${colors.border};
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  transition: all 0.2s ease;
+  animation: ${scaleIn} 0.3s ease-out;
+  animation-delay: ${props => (props.$delay || 0) * 0.05}s;
+  animation-fill-mode: both;
+  
+  &:hover {
+    border-color: ${colors.primary};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+  }
+`;
+
+const MetricValue = styled.div`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: ${colors.primary};
+  margin-bottom: 0.25rem;
+  
+  @media (min-width: 640px) {
+    font-size: 1.75rem;
+  }
+`;
+
+const MetricLabel = styled.div`
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: ${colors.textSecondary};
   text-transform: uppercase;
   letter-spacing: 0.05em;
 `;
 
-const Section = styled.div<{ delay?: number }>`
-  margin: 2rem 0;
-  animation: ${slideInLeft} 0.6s ease-out;
-  animation-delay: ${props => props.delay || 0}s;
-  animation-fill-mode: both;
+// Tab Navigation
+const TabsContainer = styled.div`
+  border-bottom: 1px solid ${colors.border};
+  background: ${colors.background};
 `;
 
-const ResultSectionTitle = styled.h3`
-  margin: 0 0 1.5rem 0;
-  color: ${colors.textPrimary};
-  font-size: 1.25rem;
-  font-weight: 700;
+const TabsList = styled.div`
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 1rem;
   
-  &::before {
-    content: '';
-    width: 4px;
-    height: 20px;
-    background: ${colors.primary};
-    border-radius: 2px;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  
+  @media (min-width: 1024px) {
+    padding: 0 1.5rem;
   }
 `;
 
-const Description = styled.p`
-  color: ${colors.textSecondary};
-  line-height: 1.6;
-  margin: 0 0 1.5rem 0;
-  font-size: 0.9rem;
+const TabButton = styled.button<{ $active: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  border: none;
+  background: transparent;
+  color: ${props => props.$active ? colors.primary : colors.textSecondary};
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  border-bottom: 2px solid ${props => props.$active ? colors.primary : 'transparent'};
+  margin-bottom: -1px;
+  
+  &:hover {
+    color: ${colors.primary};
+    background: rgba(99, 102, 241, 0.05);
+  }
+  
+  svg {
+    font-size: 1rem;
+  }
+  
+  span.count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.375rem;
+    background: ${props => props.$active ? colors.primary : colors.backgroundSecondary};
+    color: ${props => props.$active ? 'white' : colors.textSecondary};
+    border-radius: 10px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+  }
 `;
 
-const ListContainer = styled.div`
-  max-height: 400px;
-  overflow-y: auto;
-  border: 1px solid ${colors.border};
-  border-radius: 12px;
+// Tab Content
+const TabContent = styled.div`
   padding: 1.5rem;
-  background: ${colors.backgroundSecondary};
+  animation: ${fadeIn} 0.25s ease-out;
 `;
 
-const ListItem = styled.div`
-  padding: 0.75rem 0;
+// Accordion (Mobile-first tabs alternative)
+const AccordionContainer = styled.div`
+  @media (min-width: 768px) {
+    display: none;
+  }
+`;
+
+const AccordionItem = styled.div`
   border-bottom: 1px solid ${colors.border};
   
   &:last-child {
@@ -507,182 +639,373 @@ const ListItem = styled.div`
   }
 `;
 
-const Link = styled.a`
-  color: ${colors.primary};
-  text-decoration: none;
-  font-weight: 500;
+const AccordionHeader = styled.button<{ $expanded: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: ${props => props.$expanded ? colors.backgroundSecondary : 'transparent'};
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
   
   &:hover {
-    text-decoration: underline;
-    color: ${colors.primaryDark};
+    background: ${colors.backgroundSecondary};
   }
 `;
 
-const ExternalBadge = styled.span`
+const AccordionTitle = styled.span`
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: ${colors.textPrimary};
+  
+  svg {
+    color: ${colors.primary};
+  }
+`;
+
+const AccordionBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
   background: ${colors.primary};
   color: white;
-  font-size: 0.75rem;
+  border-radius: 10px;
+  font-size: 0.6875rem;
   font-weight: 600;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
   margin-left: 0.5rem;
 `;
 
-const TabContainer = styled.div`
-  border-bottom: 1px solid ${colors.border};
-  margin-bottom: 2rem;
-  background: ${colors.backgroundSecondary};
-  border-radius: 12px 12px 0 0;
-`;
-
-const TabList = styled.div`
-  display: flex;
-  gap: 0;
-  overflow-x: auto;
-  padding: 0.5rem;
-`;
-
-const Tab = styled.button<{ active: boolean }>`
-  padding: 0.875rem 1.5rem;
-  border: none;
-  background: ${props => props.active ? colors.primary : 'transparent'};
-  color: ${props => props.active ? 'white' : colors.textSecondary};
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 8px;
-  white-space: nowrap;
+const AccordionChevron = styled.span<{ $expanded: boolean }>`
+  color: ${colors.textSecondary};
+  transition: transform 0.2s ease;
+  transform: ${props => props.$expanded ? 'rotate(180deg)' : 'rotate(0)'};
   
-  &:hover {
-    background: ${props => props.active ? colors.primaryDark : colors.backgroundTertiary};
-    color: ${props => props.active ? 'white' : colors.textPrimary};
+  svg {
+    font-size: 1.25rem;
   }
 `;
 
-const WordCloudContainer = styled.div`
+const AccordionContent = styled.div<{ $expanded: boolean }>`
+  max-height: ${props => props.$expanded ? '2000px' : '0'};
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding: ${props => props.$expanded ? '0 1.25rem 1.25rem' : '0 1.25rem'};
+`;
+
+// Desktop Tabs Container
+const DesktopTabsWrapper = styled.div`
+  display: none;
+  
+  @media (min-width: 768px) {
+    display: block;
+  }
+`;
+
+// Content Sections
+const SectionTitle = styled.h3`
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: ${colors.textPrimary};
+  margin: 0 0 1rem;
+  
+  svg {
+    color: ${colors.primary};
+  }
+`;
+
+const ContentCard = styled.div`
+  background: ${colors.backgroundSecondary};
+  border: 1px solid ${colors.border};
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const ListContainer = styled.div`
+  max-height: 400px;
+  overflow-y: auto;
+  background: ${colors.backgroundSecondary};
+  border: 1px solid ${colors.border};
+  border-radius: 12px;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: ${colors.border};
+    border-radius: 3px;
+  }
+`;
+
+const ListItem = styled.div`
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid ${colors.border};
+  font-size: 0.875rem;
+  color: ${colors.textPrimary};
+  transition: background 0.15s ease;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  &:hover {
+    background: ${colors.background};
+  }
+`;
+
+const LinkItem = styled.a`
+  color: ${colors.primary};
+  text-decoration: none;
+  font-weight: 500;
+  word-break: break-word;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const Badge = styled.span<{ $variant?: 'primary' | 'success' | 'warning' | 'error' }>`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  
+  ${props => {
+    switch (props.$variant) {
+      case 'success':
+        return css`background: rgba(16, 185, 129, 0.1); color: ${colors.success};`;
+      case 'warning':
+        return css`background: rgba(245, 158, 11, 0.1); color: ${colors.warning};`;
+      case 'error':
+        return css`background: rgba(239, 68, 68, 0.1); color: ${colors.error};`;
+      default:
+        return css`background: rgba(99, 102, 241, 0.1); color: ${colors.primary};`;
+    }
+  }}
+`;
+
+// Word Cloud
+const WordCloud = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin: 1rem 0;
+  margin-top: 0.5rem;
 `;
 
-const WordBubble = styled.span<{ size: number }>`
-  display: inline-block;
+const WordBubble = styled.span<{ $size: number }>`
+  display: inline-flex;
+  align-items: center;
+  padding: ${props => `${4 + props.$size * 2}px ${8 + props.$size * 3}px`};
   background: linear-gradient(135deg, ${colors.primary}, ${colors.info});
   color: white;
-  padding: ${props => Math.max(4, props.size * 2)}px ${props => Math.max(8, props.size * 4)}px;
   border-radius: 20px;
-  font-size: ${props => Math.max(0.7, props.size)}rem;
+  font-size: ${props => `${0.7 + props.$size * 0.15}rem`};
   font-weight: 600;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  cursor: default;
   transition: transform 0.2s ease;
   
   &:hover {
-    transform: scale(1.1);
+    transform: scale(1.05);
   }
 `;
 
-const ProgressBar = styled.div<{ percentage: number; color: string }>`
+// Progress Bar
+const ProgressBar = styled.div<{ $percentage: number; $color: string }>`
   width: 100%;
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 4px;
+  height: 6px;
+  background: ${colors.border};
+  border-radius: 3px;
   overflow: hidden;
   margin: 0.5rem 0;
   
   &::after {
     content: '';
     display: block;
-    width: ${props => props.percentage}%;
+    width: ${props => props.$percentage}%;
     height: 100%;
-    background: ${props => props.color};
-    border-radius: 4px;
-    transition: width 0.3s ease;
+    background: ${props => props.$color};
+    border-radius: 3px;
+    transition: width 0.5s ease;
   }
 `;
 
-const GridContainer = styled.div`
+// Grid Layout
+const CardGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin: 2rem 0;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 `;
 
-const Card = styled.div`
-  background: ${colors.background};
-  border: 1px solid ${colors.border};
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: ${colors.shadowMd};
-`;
-
-const CardTitle = styled.h4`
-  margin: 0 0 1rem 0;
-  color: ${colors.textPrimary};
-  font-size: 1.1rem;
-  font-weight: 600;
-`;
-
+// Image Grid
 const ImageGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-  margin: 1rem 0;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
 `;
 
 const ImageCard = styled.div`
   background: ${colors.background};
   border: 1px solid ${colors.border};
-  border-radius: 8px;
-  padding: 1rem;
-  text-align: center;
-  box-shadow: ${colors.shadow};
-`;
-
-const ImagePreview = styled.img`
-  max-width: 100%;
-  max-height: 100px;
-  object-fit: cover;
-  border-radius: 4px;
-  margin-bottom: 0.5rem;
-`;
-
-const ExportButton = styled.button`
-  background: linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark});
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-left: 1rem;
+  border-radius: 10px;
+  overflow: hidden;
   transition: all 0.2s ease;
-  box-shadow: ${colors.shadowMd};
   
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: ${colors.shadowLg};
-    background: linear-gradient(135deg, ${colors.primaryDark}, ${colors.primary});
+    border-color: ${colors.primary};
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 `;
 
-const StatusIndicator = styled.div<{ status: 'good' | 'medium' | 'poor' }>`
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  margin-right: 8px;
-  background: ${props => {
-    switch (props.status) {
-      case 'good': return '#10b981';
-      case 'medium': return '#f59e0b';
-      case 'poor': return '#ef4444';
-      default: return '#6b7280';
-    }
-  }};
+const ImagePreview = styled.img`
+  width: 100%;
+  height: 80px;
+  object-fit: cover;
+  background: ${colors.backgroundSecondary};
 `;
 
+const ImageInfo = styled.div`
+  padding: 0.625rem;
+  font-size: 0.75rem;
+  color: ${colors.textSecondary};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+// Security Status
+const SecurityStatus = styled.div<{ $status: 'good' | 'medium' | 'poor' }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  margin-bottom: 1.25rem;
+  
+  ${props => {
+    switch (props.$status) {
+      case 'good':
+        return css`background: rgba(16, 185, 129, 0.1); color: ${colors.success};`;
+      case 'medium':
+        return css`background: rgba(245, 158, 11, 0.1); color: ${colors.warning};`;
+      case 'poor':
+        return css`background: rgba(239, 68, 68, 0.1); color: ${colors.error};`;
+    }
+  }}
+`;
+
+const CheckGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+`;
+
+const CheckItem = styled.div<{ $passed: boolean }>`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 1rem;
+  background: ${props => props.$passed ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)'};
+  border: 1px solid ${props => props.$passed ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'};
+  border-radius: 10px;
+  text-align: center;
+  
+  .icon {
+    font-size: 1.5rem;
+  }
+  
+  .label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: ${colors.textSecondary};
+  }
+`;
+
+// Console Log Item
+const ConsoleLogItem = styled.div<{ $level: string }>`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid ${colors.border};
+  font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+  font-size: 0.8125rem;
+  background: ${props => {
+    if (props.$level === 'error') return 'rgba(239, 68, 68, 0.05)';
+    if (props.$level === 'warning' || props.$level === 'warn') return 'rgba(245, 158, 11, 0.05)';
+    return 'transparent';
+  }};
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  .level {
+    font-weight: 700;
+    color: ${props => {
+      if (props.$level === 'error') return colors.error;
+      if (props.$level === 'warning' || props.$level === 'warn') return colors.warning;
+      return colors.success;
+    }};
+    text-transform: uppercase;
+    font-size: 0.6875rem;
+    padding: 0.125rem 0.375rem;
+    background: ${props => {
+      if (props.$level === 'error') return 'rgba(239, 68, 68, 0.1)';
+      if (props.$level === 'warning' || props.$level === 'warn') return 'rgba(245, 158, 11, 0.1)';
+      return 'rgba(16, 185, 129, 0.1)';
+    }};
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  
+  .message {
+    color: ${colors.textPrimary};
+    word-break: break-word;
+    flex: 1;
+  }
+`;
+
+// ============ COMPONENT ============
 const WebScraper: React.FC = () => {
   const { showToast } = useToast();
   const [url, setUrl] = useState('');
@@ -693,52 +1016,44 @@ const WebScraper: React.FC = () => {
   const [apiKeys, setApiKeys] = useState<any[]>([]);
   const [selectedApiKey, setSelectedApiKey] = useState<string>('');
   const [loadingKeys, setLoadingKeys] = useState(true);
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [expandedAccordions, setExpandedAccordions] = useState<Set<string>>(new Set(['overview']));
+  const tabsRef = useRef<HTMLDivElement>(null);
 
-  const getReadabilityStatus = (score: number): 'good' | 'medium' | 'poor' => {
-    if (score >= 60) return 'good';
-    if (score >= 30) return 'medium';
-    return 'poor';
-  };
+  // Loading steps for progress indication
+  const loadingSteps = [
+    { label: 'Connecting', icon: FiGlobe },
+    { label: 'Fetching', icon: FiActivity },
+    { label: 'Analyzing', icon: FiSearch },
+    { label: 'Security', icon: FiShield },
+    { label: 'Complete', icon: FiCheckCircle },
+  ];
 
-  const getReadabilityLabel = (score: number): string => {
-    if (score >= 90) return 'Very Easy';
-    if (score >= 80) return 'Easy';
-    if (score >= 70) return 'Fairly Easy';
-    if (score >= 60) return 'Standard';
-    if (score >= 50) return 'Fairly Difficult';
-    if (score >= 30) return 'Difficult';
-    return 'Very Difficult';
-  };
+  // Simulate loading step progression
+  useEffect(() => {
+    if (loading) {
+      setLoadingStep(0);
+      const intervals = [800, 1500, 2500, 4000];
+      const timers: NodeJS.Timeout[] = [];
+      
+      intervals.forEach((delay, index) => {
+        const timer = setTimeout(() => {
+          setLoadingStep(index + 1);
+        }, delay);
+        timers.push(timer);
+      });
+      
+      return () => timers.forEach(clearTimeout);
+    }
+  }, [loading]);
 
-  const exportResults = () => {
-    if (!result) return;
-    
-    const dataStr = JSON.stringify(result, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `scrape-${new URL(result.url).hostname}-${new Date().toISOString().split('T')[0]}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  };
-
-  const getTopWords = (wordFreq: Record<string, number>, count: number = 20) => {
-    return Object.entries(wordFreq)
-      .filter(([word]) => word.length > 3) // Filter out short words
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, count);
-  };
-
-  // Fetch API keys on component mount
+  // Fetch API keys on mount
   useEffect(() => {
     const fetchApiKeys = async () => {
       try {
         setLoadingKeys(true);
         const keys = await apiService.getApiKeys();
         setApiKeys(keys);
-        // Auto-select the first active key if available
         const activeKey = keys.find((key: any) => key.isActive);
         if (activeKey) {
           setSelectedApiKey(activeKey.key);
@@ -749,7 +1064,6 @@ const WebScraper: React.FC = () => {
         setLoadingKeys(false);
       }
     };
-
     fetchApiKeys();
   }, [showToast]);
 
@@ -775,7 +1089,8 @@ const WebScraper: React.FC = () => {
 
       if (response.success && response.data) {
         setResult(response.data);
-        showToast('Website scraped successfully!', 'success');
+        setLoadingStep(4);
+        showToast('Website analyzed successfully!', 'success');
       } else {
         const errorMsg = response.error || 'Failed to scrape website';
         setError(errorMsg);
@@ -796,17 +1111,501 @@ const WebScraper: React.FC = () => {
     }
   };
 
+  const exportResults = () => {
+    if (!result) return;
+    
+    const dataStr = JSON.stringify(result, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const fileName = `scrape-${new URL(result.url).hostname}-${new Date().toISOString().split('T')[0]}.json`;
+    
+    const link = document.createElement('a');
+    link.setAttribute('href', dataUri);
+    link.setAttribute('download', fileName);
+    link.click();
+  };
+
+  const toggleAccordion = (section: string) => {
+    setExpandedAccordions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(section)) {
+        newSet.delete(section);
+      } else {
+        newSet.add(section);
+      }
+      return newSet;
+    });
+  };
+
+  const getReadabilityStatus = (score: number): 'good' | 'medium' | 'poor' => {
+    if (score >= 60) return 'good';
+    if (score >= 30) return 'medium';
+    return 'poor';
+  };
+
+  const getReadabilityLabel = (score: number): string => {
+    if (score >= 90) return 'Very Easy';
+    if (score >= 80) return 'Easy';
+    if (score >= 70) return 'Fairly Easy';
+    if (score >= 60) return 'Standard';
+    if (score >= 50) return 'Fairly Difficult';
+    if (score >= 30) return 'Difficult';
+    return 'Very Difficult';
+  };
+
+  const getTopWords = (wordFreq: Record<string, number>, count: number = 20) => {
+    return Object.entries(wordFreq)
+      .filter(([word]) => word.length > 3)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, count);
+  };
+
+  const getSecurityStatus = (): 'good' | 'medium' | 'poor' => {
+    if (result?.security_report) {
+      const { is_https, insecure_cookies, mixed_content } = result.security_report;
+      if (is_https && !insecure_cookies && !mixed_content) return 'good';
+      if (is_https) return 'medium';
+      return 'poor';
+    }
+    if (result?.security_analysis) {
+      if (result.security_analysis.risk_level === 'low') return 'good';
+      if (result.security_analysis.risk_level === 'medium') return 'medium';
+      return 'poor';
+    }
+    return 'medium';
+  };
+
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: FiGlobe },
+    { id: 'content', label: 'Content', icon: FiFileText },
+    { id: 'links', label: 'Links', icon: FiLink, count: result?.links?.length },
+    { id: 'media', label: 'Media', icon: FiImage, count: result?.images?.length },
+    { id: 'seo', label: 'SEO & Meta', icon: FiSearch },
+    { id: 'network', label: 'Network', icon: FiActivity, count: result?.network_requests?.length },
+    { id: 'security', label: 'Security', icon: FiShield },
+    { id: 'performance', label: 'Performance', icon: FiZap },
+    { id: 'console', label: 'Console', icon: FiTerminal, count: result?.console_logs?.length },
+  ];
+
+  const renderTabContent = (tabId: string) => {
+    if (!result) return null;
+
+    switch (tabId) {
+      case 'overview':
+        return (
+          <>
+            {result.description && (
+              <ContentCard>
+                <SectionTitle><FiFileText /> Page Description</SectionTitle>
+                <p style={{ margin: 0, color: colors.textSecondary, lineHeight: 1.6 }}>
+                  {result.description}
+                </p>
+              </ContentCard>
+            )}
+            
+            {result.word_frequency && Object.keys(result.word_frequency).length > 0 && (
+              <ContentCard>
+                <SectionTitle><FiActivity /> Top Keywords</SectionTitle>
+                <WordCloud>
+                  {getTopWords(result.word_frequency, 12).map(([word, count]) => (
+                    <WordBubble
+                      key={word}
+                      $size={Math.min(1.5, 0.5 + (count / Math.max(...Object.values(result.word_frequency))) * 1)}
+                      title={`${word}: ${count} occurrences`}
+                    >
+                      {word} ({count})
+                    </WordBubble>
+                  ))}
+                </WordCloud>
+              </ContentCard>
+            )}
+            
+            <CardGrid>
+              <ContentCard>
+                <SectionTitle><FiActivity /> Content Metrics</SectionTitle>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: colors.textSecondary }}>Language</span>
+                    <strong>{result.language || 'Unknown'}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: colors.textSecondary }}>Response Time</span>
+                    <strong>{result.response_time_ms}ms</strong>
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                      <span style={{ color: colors.textSecondary }}>Readability</span>
+                      <strong>{getReadabilityLabel(result.readability_score || 0)}</strong>
+                    </div>
+                    <ProgressBar
+                      $percentage={result.readability_score || 0}
+                      $color={getReadabilityStatus(result.readability_score || 0) === 'good' ? colors.success :
+                             getReadabilityStatus(result.readability_score || 0) === 'medium' ? colors.warning : colors.error}
+                    />
+                  </div>
+                </div>
+              </ContentCard>
+              
+              <ContentCard>
+                <SectionTitle><FiLink /> Link Analysis</SectionTitle>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: colors.textSecondary }}>Total Links</span>
+                    <strong>{result.links?.length || 0}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: colors.textSecondary }}>External</span>
+                    <strong>{result.links?.filter(l => l.is_external).length || 0}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: colors.textSecondary }}>Internal</span>
+                    <strong>{result.links?.filter(l => !l.is_external).length || 0}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: colors.textSecondary }}>Social Media</span>
+                    <strong>{result.social_media_links?.length || 0}</strong>
+                  </div>
+                </div>
+              </ContentCard>
+            </CardGrid>
+          </>
+        );
+
+      case 'content':
+        return (
+          <>
+            {result.headings && result.headings.length > 0 && (
+              <>
+                <SectionTitle><FiFileText /> Page Structure ({result.headings.length} headings)</SectionTitle>
+                <ListContainer>
+                  {result.headings.map((heading, index) => (
+                    <ListItem key={index}>{heading}</ListItem>
+                  ))}
+                </ListContainer>
+              </>
+            )}
+            
+            {result.word_frequency && (
+              <div style={{ marginTop: '1.5rem' }}>
+                <SectionTitle><FiActivity /> Word Frequency</SectionTitle>
+                <ListContainer>
+                  {getTopWords(result.word_frequency, 30).map(([word, count]) => (
+                    <ListItem key={word} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>{word}</span>
+                      <strong style={{ color: colors.primary }}>{count}</strong>
+                    </ListItem>
+                  ))}
+                </ListContainer>
+              </div>
+            )}
+          </>
+        );
+
+      case 'links':
+        return result.links && result.links.length > 0 ? (
+          <>
+            <SectionTitle><FiLink /> All Links ({result.links.length})</SectionTitle>
+            <ListContainer>
+              {result.links.map((link, index) => (
+                <ListItem key={index}>
+                  <LinkItem href={link.href} target="_blank" rel="noopener noreferrer">
+                    {link.text || link.href}
+                    <FiExternalLink style={{ marginLeft: '0.375rem', fontSize: '0.75rem', verticalAlign: 'middle' }} />
+                  </LinkItem>
+                  {link.is_external && <Badge $variant="primary">External</Badge>}
+                </ListItem>
+              ))}
+            </ListContainer>
+          </>
+        ) : (
+          <p style={{ color: colors.textSecondary }}>No links found on this page.</p>
+        );
+
+      case 'media':
+        return result.images && result.images.length > 0 ? (
+          <>
+            <SectionTitle><FiImage /> Images ({result.images.length})</SectionTitle>
+            <ImageGrid>
+              {result.images.slice(0, 16).map((image, index) => (
+                <ImageCard key={index}>
+                  <ImagePreview
+                    src={image.src}
+                    alt={image.alt || 'Image'}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <ImageInfo>
+                    {image.alt || 'No alt text'}
+                    {image.width && image.height && (
+                      <span style={{ display: 'block', opacity: 0.7 }}>{image.width}×{image.height}</span>
+                    )}
+                  </ImageInfo>
+                </ImageCard>
+              ))}
+            </ImageGrid>
+            {result.images.length > 16 && (
+              <p style={{ textAlign: 'center', color: colors.textSecondary, marginTop: '1rem', fontStyle: 'italic' }}>
+                +{result.images.length - 16} more images
+              </p>
+            )}
+          </>
+        ) : (
+          <p style={{ color: colors.textSecondary }}>No images found on this page.</p>
+        );
+
+      case 'seo':
+        return (
+          <>
+            <SectionTitle><FiSearch /> SEO & Meta Information</SectionTitle>
+            {result.meta_tags && Object.keys(result.meta_tags).length > 0 ? (
+              <ListContainer>
+                {Object.entries(result.meta_tags).map(([name, content]) => (
+                  <ListItem key={name} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <strong style={{ color: colors.textPrimary }}>{name}</strong>
+                    <span style={{ color: colors.textSecondary, fontSize: '0.8125rem', wordBreak: 'break-word' }}>{content}</span>
+                  </ListItem>
+                ))}
+              </ListContainer>
+            ) : (
+              <p style={{ color: colors.textSecondary }}>No meta tags found.</p>
+            )}
+          </>
+        );
+
+      case 'network':
+        return result.network_requests && result.network_requests.length > 0 ? (
+          <>
+            <MetricsGrid style={{ padding: 0, marginBottom: '1.5rem', background: 'transparent' }}>
+              <MetricItem>
+                <MetricValue>{result.network_requests.length}</MetricValue>
+                <MetricLabel>Total Requests</MetricLabel>
+              </MetricItem>
+              <MetricItem>
+                <MetricValue>{(result.network_requests.reduce((sum, req) => sum + req.size_bytes, 0) / 1024).toFixed(1)}KB</MetricValue>
+                <MetricLabel>Total Size</MetricLabel>
+              </MetricItem>
+              <MetricItem>
+                <MetricValue style={{ color: result.network_requests.filter(req => req.status >= 400).length > 0 ? colors.error : colors.success }}>
+                  {result.network_requests.filter(req => req.status >= 400).length}
+                </MetricValue>
+                <MetricLabel>Failed</MetricLabel>
+              </MetricItem>
+            </MetricsGrid>
+            
+            <SectionTitle><FiActivity /> Request Details</SectionTitle>
+            <ListContainer>
+              {result.network_requests.map((request, index) => (
+                <ListItem key={index} style={{ borderLeft: `3px solid ${request.status >= 400 ? colors.error : request.status >= 300 ? colors.warning : colors.success}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                    <strong style={{ flex: 1, marginRight: '1rem', wordBreak: 'break-all' }}>{request.method} {request.url}</strong>
+                    <Badge $variant={request.status >= 400 ? 'error' : request.status >= 300 ? 'warning' : 'success'}>
+                      {request.status}
+                    </Badge>
+                  </div>
+                  <div style={{ fontSize: '0.8125rem', color: colors.textSecondary, display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                    <span>Type: {request.content_type}</span>
+                    <span>Size: {(request.size_bytes / 1024).toFixed(2)}KB</span>
+                    <span>Time: {request.response_time_ms}ms</span>
+                  </div>
+                </ListItem>
+              ))}
+            </ListContainer>
+          </>
+        ) : (
+          <p style={{ color: colors.textSecondary }}>No network requests captured.</p>
+        );
+
+      case 'security':
+        const securityData = result.security_report || result.security_analysis;
+        if (!securityData) {
+          return <p style={{ color: colors.textSecondary }}>No security data available.</p>;
+        }
+        
+        const isHttps = result.security_report?.is_https ?? result.security_analysis?.https;
+        const secureCookies = result.security_report ? !result.security_report.insecure_cookies : result.security_analysis?.cookies_secure;
+        const noMixedContent = result.security_report ? !result.security_report.mixed_content : !result.security_analysis?.mixed_content;
+        
+        return (
+          <>
+            <SecurityStatus $status={getSecurityStatus()}>
+              {getSecurityStatus() === 'good' ? '🟢 Good Security' : 
+               getSecurityStatus() === 'medium' ? '🟡 Moderate Security' : '🔴 Poor Security'}
+            </SecurityStatus>
+            
+            <CheckGrid>
+              <CheckItem $passed={!!isHttps}>
+                <span className="icon">{isHttps ? '✅' : '❌'}</span>
+                <span className="label">HTTPS</span>
+              </CheckItem>
+              <CheckItem $passed={!!secureCookies}>
+                <span className="icon">{secureCookies ? '✅' : '❌'}</span>
+                <span className="label">Secure Cookies</span>
+              </CheckItem>
+              <CheckItem $passed={!!noMixedContent}>
+                <span className="icon">{noMixedContent ? '✅' : '❌'}</span>
+                <span className="label">No Mixed Content</span>
+              </CheckItem>
+              <CheckItem $passed={result.security_analysis ? !result.security_analysis.insecure_forms : true}>
+                <span className="icon">{result.security_analysis?.insecure_forms ? '❌' : '✅'}</span>
+                <span className="label">Secure Forms</span>
+              </CheckItem>
+            </CheckGrid>
+            
+            {result.security_report?.missing_security_headers && result.security_report.missing_security_headers.length > 0 && (
+              <ContentCard>
+                <SectionTitle><FiAlertCircle /> Missing Headers ({result.security_report.missing_security_headers.length})</SectionTitle>
+                <ListContainer style={{ maxHeight: '200px' }}>
+                  {result.security_report.missing_security_headers.map((header, index) => (
+                    <ListItem key={index}>
+                      <Badge $variant="warning">⚠️</Badge> {header}
+                    </ListItem>
+                  ))}
+                </ListContainer>
+              </ContentCard>
+            )}
+            
+            {result.security_analysis?.recommendations && result.security_analysis.recommendations.length > 0 && (
+              <ContentCard>
+                <SectionTitle><FiCheckCircle /> Recommendations</SectionTitle>
+                <ListContainer style={{ maxHeight: '200px' }}>
+                  {result.security_analysis.recommendations.map((rec, index) => (
+                    <ListItem key={index}>🔧 {rec}</ListItem>
+                  ))}
+                </ListContainer>
+              </ContentCard>
+            )}
+          </>
+        );
+
+      case 'performance':
+        if (!result.performance_metrics) {
+          return <p style={{ color: colors.textSecondary }}>No performance data available.</p>;
+        }
+        
+        const perf = result.performance_metrics;
+        return (
+          <>
+            <MetricsGrid style={{ padding: 0, marginBottom: '1.5rem', background: 'transparent' }}>
+              <MetricItem>
+                <MetricValue>{perf.total_load_time_ms}ms</MetricValue>
+                <MetricLabel>Load Time</MetricLabel>
+              </MetricItem>
+              <MetricItem>
+                <MetricValue>{perf.dom_ready_time_ms}ms</MetricValue>
+                <MetricLabel>DOM Ready</MetricLabel>
+              </MetricItem>
+              <MetricItem>
+                <MetricValue>{perf.first_paint_ms}ms</MetricValue>
+                <MetricLabel>First Paint</MetricLabel>
+              </MetricItem>
+              <MetricItem>
+                <MetricValue>{perf.largest_contentful_paint_ms}ms</MetricValue>
+                <MetricLabel>LCP</MetricLabel>
+              </MetricItem>
+              <MetricItem>
+                <MetricValue>{perf.cumulative_layout_shift.toFixed(3)}</MetricValue>
+                <MetricLabel>CLS</MetricLabel>
+              </MetricItem>
+              <MetricItem>
+                <MetricValue>
+                  {perf.first_paint_ms < 1000 ? '🟢' : perf.first_paint_ms < 2500 ? '🟡' : '🔴'}
+                </MetricValue>
+                <MetricLabel>Score</MetricLabel>
+              </MetricItem>
+            </MetricsGrid>
+            
+            <ContentCard>
+              <SectionTitle><FiZap /> Performance Insights</SectionTitle>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div>
+                  <strong>Load Time: </strong>
+                  <span style={{ color: colors.textSecondary }}>
+                    {perf.total_load_time_ms < 2000 ? 'Excellent - Very fast' :
+                     perf.total_load_time_ms < 4000 ? 'Good - Acceptable speed' :
+                     perf.total_load_time_ms < 8000 ? 'Average - Could improve' : 'Poor - Needs optimization'}
+                  </span>
+                </div>
+                <div>
+                  <strong>Layout Stability: </strong>
+                  <span style={{ color: colors.textSecondary }}>
+                    {perf.cumulative_layout_shift < 0.1 ? 'Excellent - Minimal shifts' :
+                     perf.cumulative_layout_shift < 0.25 ? 'Good - Some shifts' : 'Poor - Unstable layout'}
+                  </span>
+                </div>
+                <div>
+                  <strong>Request Count: </strong>
+                  <span style={{ color: colors.textSecondary }}>
+                    {perf.total_requests} requests ({perf.total_size_kb.toFixed(1)}KB total)
+                  </span>
+                </div>
+              </div>
+            </ContentCard>
+          </>
+        );
+
+      case 'console':
+        return (
+          <>
+            {result.console_logs && result.console_logs.length > 0 ? (
+              <>
+                <SectionTitle><FiTerminal /> Console Messages ({result.console_logs.length})</SectionTitle>
+                <ListContainer>
+                  {result.console_logs.map((log, index) => {
+                    const logMessage = typeof log === 'string' ? log : log.message;
+                    const logLevel = typeof log === 'object' && log.level ? log.level : 'log';
+                    
+                    return (
+                      <ConsoleLogItem key={index} $level={logLevel}>
+                        <span className="level">{logLevel}</span>
+                        <span className="message">{logMessage}</span>
+                      </ConsoleLogItem>
+                    );
+                  })}
+                </ListContainer>
+              </>
+            ) : (
+              <p style={{ color: colors.textSecondary }}>No console messages captured.</p>
+            )}
+            
+            {result.cookies && Object.keys(result.cookies).length > 0 && (
+              <div style={{ marginTop: '1.5rem' }}>
+                <SectionTitle><FiLock /> Cookies ({Object.keys(result.cookies).length})</SectionTitle>
+                <ListContainer style={{ maxHeight: '200px' }}>
+                  {Object.entries(result.cookies).map(([name, value]) => (
+                    <ListItem key={name} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <strong>{name}</strong>
+                      <span style={{ color: colors.textSecondary, fontSize: '0.8125rem', wordBreak: 'break-all' }}>{value}</span>
+                    </ListItem>
+                  ))}
+                </ListContainer>
+              </div>
+            )}
+            
+            {result.response_headers && Object.keys(result.response_headers).length > 0 && (
+              <div style={{ marginTop: '1.5rem' }}>
+                <SectionTitle><FiActivity /> Response Headers</SectionTitle>
+                <ListContainer style={{ maxHeight: '200px' }}>
+                  {Object.entries(result.response_headers).map(([header, value]) => (
+                    <ListItem key={header} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <strong>{header}</strong>
+                      <span style={{ color: colors.textSecondary, fontSize: '0.8125rem' }}>{value}</span>
+                    </ListItem>
+                  ))}
+                </ListContainer>
+              </div>
+            )}
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
-    <ScraperContainer>
-      <PageHeader>
-        <h1>Web Scraper & Analyzer</h1>
-        <p>Extract comprehensive data from any website including content, metadata, performance metrics, security analysis, and network requests.</p>
-      </PageHeader>
-      
-      <InputSection>
-        <SectionTitle>🔍 Website Analysis</SectionTitle>
-        <InputGroup>
-          <InputWrapper>
+    <Container>
+      {/* Input Section */}
+      <InputCard>
+        <InputRow>
+          <InputGroup style={{ flex: 2 }}>
             <Label htmlFor="url-input">Website URL</Label>
             <URLInput
               id="url-input"
@@ -817,662 +1616,173 @@ const WebScraper: React.FC = () => {
               placeholder="https://example.com"
               disabled={loading}
             />
-          </InputWrapper>
-          <ButtonGroup>
-            <InputWrapper>
-              <Label htmlFor="api-key-select">API Key</Label>
+          </InputGroup>
+          
+          <InputGroup>
+            <Label htmlFor="api-key-select">API Key</Label>
+            <APIKeySelect
+              id="api-key-select"
+              value={selectedApiKey}
+              onChange={(e) => setSelectedApiKey(e.target.value)}
+              disabled={loading || loadingKeys}
+            >
               {loadingKeys ? (
-                <APIKeySelect disabled>
-                  <option>Loading API keys...</option>
-                </APIKeySelect>
+                <option>Loading...</option>
               ) : (
-                <APIKeySelect
-                  id="api-key-select"
-                  value={selectedApiKey}
-                  onChange={(e) => setSelectedApiKey(e.target.value)}
-                  disabled={loading}
-                >
-                  <option value="">Select an API key</option>
+                <>
+                  <option value="">Select API key</option>
                   {apiKeys.map((key: any) => (
                     <option key={key.id} value={key.key}>
                       {key.name} {key.isActive ? '' : '(Inactive)'}
                     </option>
                   ))}
-                </APIKeySelect>
+                </>
               )}
-            </InputWrapper>
-            <ScrapeButton onClick={handleScrape} disabled={loading || !selectedApiKey}>
-              {loading && <LoadingSpinner />}
-              {loading ? 'Analyzing...' : '🚀 Start Analysis'}
-            </ScrapeButton>
-          </ButtonGroup>
-        </InputGroup>
-      </InputSection>
+            </APIKeySelect>
+          </InputGroup>
+          
+          <ScrapeButton 
+            onClick={handleScrape} 
+            disabled={loading || !selectedApiKey}
+            $loading={loading}
+          >
+            {loading ? <FiLoader /> : <FiSearch />}
+            {loading ? 'Analyzing...' : 'Analyze'}
+          </ScrapeButton>
+        </InputRow>
+      </InputCard>
 
+      {/* Loading State */}
       {loading && (
-        <ResultsContainer>
-          <Loader 
-            text="Analyzing website..." 
-            subtext="Extracting data, capturing screenshots, and running security analysis"
-            size="large"
-          />
-        </ResultsContainer>
+        <LoadingContainer>
+          <LoadingSpinner />
+          <LoadingTitle>Analyzing Website</LoadingTitle>
+          <LoadingSubtitle>Extracting data, running security checks, and measuring performance...</LoadingSubtitle>
+          <ProgressBarContainer>
+            <ProgressBarFill />
+          </ProgressBarContainer>
+          <LoadingSteps>
+            {loadingSteps.map((step, index) => (
+              <LoadingStep 
+                key={step.label} 
+                $active={loadingStep === index}
+                $complete={loadingStep > index}
+              >
+                {loadingStep > index ? <FiCheckCircle /> : <step.icon />}
+                {step.label}
+              </LoadingStep>
+            ))}
+          </LoadingSteps>
+        </LoadingContainer>
       )}
 
+      {/* Error State */}
       {error && !loading && (
-        <ErrorMessage>
-          <strong>Error:</strong> {error}
-        </ErrorMessage>
+        <ErrorContainer>
+          <FiAlertCircle />
+          <ErrorText>
+            <strong>Analysis Failed</strong>
+            <span>{error}</span>
+          </ErrorText>
+        </ErrorContainer>
       )}
 
+      {/* Results */}
       {result && !loading && (
-        <ResultsContainer>
-          <SuccessHeader>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <SiteTitle>{result.title}</SiteTitle>
-                <SiteURL>{result.url}</SiteURL>
-              </div>
-              <ExportButton onClick={exportResults}>
-                📊 Export Data
-              </ExportButton>
-            </div>
-          </SuccessHeader>
+        <ResultsCard>
+          {/* Header */}
+          <ResultsHeader>
+            <SiteInfo>
+              <SiteTitle>{result.title || 'Untitled Page'}</SiteTitle>
+              <SiteURL>{result.url}</SiteURL>
+            </SiteInfo>
+            <ExportButton onClick={exportResults}>
+              <FiDownload />
+              Export JSON
+            </ExportButton>
+          </ResultsHeader>
 
-          <MetricsRow>
-            <MetricCard>
+          {/* Metrics */}
+          <MetricsGrid>
+            <MetricItem $delay={0}>
               <MetricValue>{result.word_count?.toLocaleString() || 0}</MetricValue>
               <MetricLabel>Words</MetricLabel>
-            </MetricCard>
-            <MetricCard>
-              <MetricValue>{result.reading_time_minutes?.toFixed(1) || 0}min</MetricValue>
-              <MetricLabel>Reading Time</MetricLabel>
-            </MetricCard>
-            <MetricCard>
-              <MetricValue>
-                <StatusIndicator status={getReadabilityStatus(result.readability_score || 0)} />
-                {result.readability_score?.toFixed(0) || 0}
-              </MetricValue>
-              <MetricLabel>{getReadabilityLabel(result.readability_score || 0)}</MetricLabel>
-            </MetricCard>
-            <MetricCard>
+            </MetricItem>
+            <MetricItem $delay={1}>
+              <MetricValue>{result.reading_time_minutes?.toFixed(1) || 0}m</MetricValue>
+              <MetricLabel>Read Time</MetricLabel>
+            </MetricItem>
+            <MetricItem $delay={2}>
+              <MetricValue>{result.readability_score?.toFixed(0) || 0}</MetricValue>
+              <MetricLabel>Readability</MetricLabel>
+            </MetricItem>
+            <MetricItem $delay={3}>
               <MetricValue>{result.links?.length || 0}</MetricValue>
               <MetricLabel>Links</MetricLabel>
-            </MetricCard>
-            <MetricCard>
+            </MetricItem>
+            <MetricItem $delay={4}>
               <MetricValue>{result.images?.length || 0}</MetricValue>
               <MetricLabel>Images</MetricLabel>
-            </MetricCard>
-            <MetricCard>
-              <MetricValue>{result.page_size_kb?.toFixed(1) || 0}KB</MetricValue>
-              <MetricLabel>Page Size</MetricLabel>
-            </MetricCard>
-          </MetricsRow>
+            </MetricItem>
+            <MetricItem $delay={5}>
+              <MetricValue>{result.page_size_kb?.toFixed(0) || 0}KB</MetricValue>
+              <MetricLabel>Size</MetricLabel>
+            </MetricItem>
+          </MetricsGrid>
 
-          <TabContainer>
-            <TabList>
-              <Tab active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>
-                📊 Overview
-              </Tab>
-              <Tab active={activeTab === 'content'} onClick={() => setActiveTab('content')}>
-                📝 Content Analysis
-              </Tab>
-              <Tab active={activeTab === 'links'} onClick={() => setActiveTab('links')}>
-                🔗 Links ({result.links?.length || 0})
-              </Tab>
-              <Tab active={activeTab === 'media'} onClick={() => setActiveTab('media')}>
-                🖼️ Media ({result.images?.length || 0})
-              </Tab>
-              <Tab active={activeTab === 'seo'} onClick={() => setActiveTab('seo')}>
-                🎯 SEO & Meta
-              </Tab>
-              <Tab active={activeTab === 'network'} onClick={() => setActiveTab('network')}>
-                🌐 Network ({result.network_requests?.length || 0})
-              </Tab>
-              <Tab active={activeTab === 'security'} onClick={() => setActiveTab('security')}>
-                🔒 Security Analysis
-              </Tab>
-              <Tab active={activeTab === 'performance'} onClick={() => setActiveTab('performance')}>
-                ⚡ Performance
-              </Tab>
-              <Tab active={activeTab === 'console'} onClick={() => setActiveTab('console')}>
-                📋 Console ({result.console_logs?.length || 0})
-              </Tab>
-            </TabList>
-          </TabContainer>
-
-          {activeTab === 'overview' && (
-            <>
-              <Section>
-                <SectionTitle>Page Description</SectionTitle>
-                <Description>{result.description || 'No description available'}</Description>
-              </Section>
-
-              {result.word_frequency && (
-                <Section>
-                  <SectionTitle>Top Keywords</SectionTitle>
-                  <WordCloudContainer>
-                    {getTopWords(result.word_frequency, 15).map(([word, count], index) => (
-                      <WordBubble 
-                        key={word} 
-                        size={Math.min(1.5, 0.8 + (count / Math.max(...Object.values(result.word_frequency))) * 0.7)}
-                        title={`${word}: ${count} occurrences`}
-                      >
-                        {word} ({count})
-                      </WordBubble>
-                    ))}
-                  </WordCloudContainer>
-                </Section>
-              )}
-
-              <GridContainer>
-                <Card>
-                  <CardTitle>📊 Content Metrics</CardTitle>
-                  <div style={{ marginBottom: '1rem' }}>
-                    <strong>Language:</strong> {result.language || 'Unknown'}
-                  </div>
-                  <div style={{ marginBottom: '1rem' }}>
-                    <strong>Response Time:</strong> {result.response_time_ms}ms
-                  </div>
-                  <div>
-                    <strong>Readability Score:</strong>
-                    <ProgressBar 
-                      percentage={result.readability_score || 0} 
-                      color={getReadabilityStatus(result.readability_score || 0) === 'good' ? '#10b981' : 
-                             getReadabilityStatus(result.readability_score || 0) === 'medium' ? '#f59e0b' : '#ef4444'}
-                    />
-                    {getReadabilityLabel(result.readability_score || 0)} ({result.readability_score?.toFixed(1) || 0})
-                  </div>
-                </Card>
-
-                <Card>
-                  <CardTitle>🔗 Link Analysis</CardTitle>
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    <strong>Total Links:</strong> {result.links?.length || 0}
-                  </div>
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    <strong>External Links:</strong> {result.links?.filter(l => l.is_external).length || 0}
-                  </div>
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    <strong>Internal Links:</strong> {result.links?.filter(l => !l.is_external).length || 0}
-                  </div>
-                  <div>
-                    <strong>Social Media:</strong> {result.social_media_links?.length || 0}
-                  </div>
-                </Card>
-              </GridContainer>
-            </>
-          )}
-
-          {activeTab === 'content' && (
-            <>
-              {result.headings && result.headings.length > 0 && (
-                <Section>
-                  <SectionTitle>Page Structure ({result.headings.length})</SectionTitle>
-                  <ListContainer>
-                    {result.headings.map((heading, index) => (
-                      <ListItem key={index}>{heading}</ListItem>
-                    ))}
-                  </ListContainer>
-                </Section>
-              )}
-
-              {result.word_frequency && (
-                <Section>
-                  <SectionTitle>Word Frequency Analysis</SectionTitle>
-                  <ListContainer>
-                    {getTopWords(result.word_frequency, 50).map(([word, count]) => (
-                      <ListItem key={word} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>{word}</span>
-                        <span style={{ fontWeight: 'bold', color: '#1e1e1e' }}>{count}</span>
-                      </ListItem>
-                    ))}
-                  </ListContainer>
-                </Section>
-              )}
-            </>
-          )}
-
-          {activeTab === 'links' && result.links && result.links.length > 0 && (
-            <Section>
-              <SectionTitle>All Links ({result.links.length})</SectionTitle>
-              <ListContainer>
-                {result.links.map((link, index) => (
-                  <ListItem key={index}>
-                    <Link href={link.href} target="_blank" rel="noopener noreferrer">
-                      {link.text || link.href}
-                    </Link>
-                    {link.is_external && <ExternalBadge>External</ExternalBadge>}
-                  </ListItem>
+          {/* Desktop Tabs */}
+          <DesktopTabsWrapper>
+            <TabsContainer>
+              <TabsList ref={tabsRef}>
+                {tabs.map(tab => (
+                  <TabButton
+                    key={tab.id}
+                    $active={activeTab === tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                  >
+                    <tab.icon />
+                    {tab.label}
+                    {tab.count !== undefined && tab.count > 0 && (
+                      <span className="count">{tab.count}</span>
+                    )}
+                  </TabButton>
                 ))}
-              </ListContainer>
-            </Section>
-          )}
+              </TabsList>
+            </TabsContainer>
+            
+            <TabContent>
+              {renderTabContent(activeTab)}
+            </TabContent>
+          </DesktopTabsWrapper>
 
-          {activeTab === 'media' && result.images && result.images.length > 0 && (
-            <Section>
-              <SectionTitle>Images & Media ({result.images.length})</SectionTitle>
-              <ImageGrid>
-                {result.images.slice(0, 12).map((image, index) => (
-                  <ImageCard key={index}>
-                    <ImagePreview 
-                      src={image.src} 
-                      alt={image.alt || 'Image'}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                    <div style={{ fontSize: '0.8rem', color: '#6b7280', wordBreak: 'break-all' }}>
-                      <strong>Alt:</strong> {image.alt || 'No alt text'}
-                    </div>
-                    {(image.width || image.height) && (
-                      <div style={{ fontSize: '0.7rem', color: '#9ca3af' }}>
-                        {image.width}×{image.height}
-                      </div>
+          {/* Mobile Accordion */}
+          <AccordionContainer>
+            {tabs.map(tab => (
+              <AccordionItem key={tab.id}>
+                <AccordionHeader
+                  $expanded={expandedAccordions.has(tab.id)}
+                  onClick={() => toggleAccordion(tab.id)}
+                >
+                  <AccordionTitle>
+                    <tab.icon />
+                    {tab.label}
+                    {tab.count !== undefined && tab.count > 0 && (
+                      <AccordionBadge>{tab.count}</AccordionBadge>
                     )}
-                  </ImageCard>
-                ))}
-              </ImageGrid>
-              {result.images.length > 12 && (
-                <div style={{ fontStyle: 'italic', color: '#6b7280', textAlign: 'center', marginTop: '1rem' }}>
-                  ... and {result.images.length - 12} more images
-                </div>
-              )}
-            </Section>
-          )}
-
-          {activeTab === 'seo' && (
-            <Section>
-              <SectionTitle>SEO & Meta Information</SectionTitle>
-              {result.meta_tags && Object.keys(result.meta_tags).length > 0 ? (
-                <ListContainer>
-                  {Object.entries(result.meta_tags).map(([name, content]) => (
-                    <ListItem key={name} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <strong style={{ color: '#1e1e1e' }}>{name}</strong>
-                      <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>{content}</span>
-                    </ListItem>
-                  ))}
-                </ListContainer>
-              ) : (
-                <Description>No meta tags found</Description>
-              )}
-            </Section>
-          )}
-
-          {activeTab === 'network' && result.network_requests && (
-            <Section>
-              <SectionTitle>Network Requests Analysis</SectionTitle>
-              {result.network_requests.length > 0 ? (
-                <div>
-                  <div style={{ marginBottom: '1rem' }}>
-                    <MetricsRow>
-                      <MetricCard>
-                        <MetricValue>{result.network_requests.length}</MetricValue>
-                        <MetricLabel>Total Requests</MetricLabel>
-                      </MetricCard>
-                      <MetricCard>
-                        <MetricValue>{(result.network_requests.reduce((sum, req) => sum + req.size_bytes, 0) / 1024).toFixed(1)}KB</MetricValue>
-                        <MetricLabel>Total Size</MetricLabel>
-                      </MetricCard>
-                      <MetricCard>
-                        <MetricValue>{result.network_requests.filter(req => req.status >= 400).length}</MetricValue>
-                        <MetricLabel>Failed Requests</MetricLabel>
-                      </MetricCard>
-                    </MetricsRow>
-                  </div>
-                  <ListContainer>
-                    {result.network_requests.map((request, index) => (
-                      <ListItem key={index} style={{ borderLeft: `3px solid ${request.status >= 400 ? '#ef4444' : request.status >= 300 ? '#f59e0b' : '#10b981'}` }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                          <strong style={{ color: '#1e1e1e', flex: 1, marginRight: '1rem' }}>{request.method} {request.url}</strong>
-                          <span style={{ 
-                            color: request.status >= 400 ? '#ef4444' : request.status >= 300 ? '#f59e0b' : '#10b981',
-                            fontWeight: 'bold',
-                            fontSize: '0.9rem'
-                          }}>
-                            {request.status}
-                          </span>
-                        </div>
-                        <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>
-                          <div>Type: {request.content_type}</div>
-                          <div>Size: {(request.size_bytes / 1024).toFixed(2)}KB</div>
-                          <div>Time: {request.response_time_ms}ms</div>
-                          {Object.keys(request.headers).length > 0 && (
-                            <details style={{ marginTop: '0.5rem' }}>
-                              <summary style={{ cursor: 'pointer', color: '#4f46e5' }}>Headers ({Object.keys(request.headers).length})</summary>
-                              <div style={{ marginTop: '0.5rem', paddingLeft: '1rem' }}>
-                                {Object.entries(request.headers).map(([key, value]) => (
-                                  <div key={key} style={{ marginBottom: '0.25rem' }}>
-                                    <strong>{key}:</strong> {value}
-                                  </div>
-                                ))}
-                              </div>
-                            </details>
-                          )}
-                        </div>
-                      </ListItem>
-                    ))}
-                  </ListContainer>
-                </div>
-              ) : (
-                <Description>No network requests captured</Description>
-              )}
-            </Section>
-          )}
-
-          {activeTab === 'security' && (result.security_analysis || result.security_report) && (
-            <Section delay={0.1}>
-              <ResultSectionTitle>🔒 Security Analysis</ResultSectionTitle>
-              <div style={{ marginBottom: '1.5rem' }}>
-                {/* Handle both SecurityAnalysis and SecurityReport formats */}
-                {result.security_report && (
-                  <>
-                    <div style={{ 
-                      display: 'inline-flex', 
-                      alignItems: 'center', 
-                      padding: '0.75rem 1.25rem', 
-                      borderRadius: '12px',
-                      backgroundColor: result.security_report.is_https && !result.security_report.insecure_cookies && !result.security_report.mixed_content ? '#dcfce7' : 
-                                      result.security_report.is_https ? '#fef3c7' : '#fee2e2',
-                      color: result.security_report.is_https && !result.security_report.insecure_cookies && !result.security_report.mixed_content ? '#166534' : 
-                             result.security_report.is_https ? '#92400e' : '#991b1b',
-                      fontWeight: '600',
-                      marginBottom: '1.5rem',
-                      fontSize: '1rem'
-                    }}>
-                      {result.security_report.is_https && !result.security_report.insecure_cookies && !result.security_report.mixed_content ? '🟢 Good Security' : 
-                       result.security_report.is_https ? '🟡 Moderate Security' : '🔴 Poor Security'} 
-                    </div>
-
-                    <MetricsRow>
-                      <MetricCard>
-                        <MetricValue>{result.security_report.is_https ? '✅' : '❌'}</MetricValue>
-                        <MetricLabel>HTTPS</MetricLabel>
-                      </MetricCard>
-                      <MetricCard>
-                        <MetricValue>{!result.security_report.insecure_cookies ? '✅' : '❌'}</MetricValue>
-                        <MetricLabel>Secure Cookies</MetricLabel>
-                      </MetricCard>
-                      <MetricCard>
-                        <MetricValue>{!result.security_report.mixed_content ? '✅' : '❌'}</MetricValue>
-                        <MetricLabel>No Mixed Content</MetricLabel>
-                      </MetricCard>
-                      <MetricCard>
-                        <MetricValue>{result.security_report.missing_security_headers.length === 0 ? '✅' : '⚠️'}</MetricValue>
-                        <MetricLabel>Security Headers</MetricLabel>
-                      </MetricCard>
-                    </MetricsRow>
-
-                    {result.security_report.missing_security_headers && result.security_report.missing_security_headers.length > 0 && (
-                      <div style={{ marginBottom: '1.5rem', marginTop: '1.5rem' }}>
-                        <h4 style={{ margin: '0 0 0.75rem 0', color: colors.textPrimary }}>Missing Security Headers ({result.security_report.missing_security_headers.length})</h4>
-                        <ListContainer>
-                          {result.security_report.missing_security_headers.map((header, index) => (
-                            <ListItem key={index}>
-                              <span style={{ color: colors.warning }}>⚠️</span> {header}
-                            </ListItem>
-                          ))}
-                        </ListContainer>
-                      </div>
-                    )}
-
-                    {result.security_report.csp && (
-                      <div style={{ marginBottom: '1.5rem' }}>
-                        <h4 style={{ margin: '0 0 0.75rem 0', color: colors.textPrimary }}>Content Security Policy</h4>
-                        <ListContainer>
-                          <ListItem style={{ wordBreak: 'break-all' }}>
-                            {result.security_report.csp}
-                          </ListItem>
-                        </ListContainer>
-                      </div>
-                    )}
-
-                    {result.security_report.notes && result.security_report.notes.length > 0 && (
-                      <div style={{ marginBottom: '1.5rem' }}>
-                        <h4 style={{ margin: '0 0 0.75rem 0', color: colors.textPrimary }}>Security Notes ({result.security_report.notes.length})</h4>
-                        <ListContainer>
-                          {result.security_report.notes.map((note, index) => (
-                            <ListItem key={index}>
-                              <span style={{ color: colors.info }}>ℹ️</span> {note}
-                            </ListItem>
-                          ))}
-                        </ListContainer>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* Fallback to old format if security_analysis exists */}
-                {result.security_analysis && !result.security_report && (
-                  <>
-                    <div style={{ 
-                      display: 'inline-flex', 
-                      alignItems: 'center', 
-                      padding: '0.5rem 1rem', 
-                      borderRadius: '8px',
-                      backgroundColor: result.security_analysis.risk_level === 'low' ? '#dcfce7' : 
-                                      result.security_analysis.risk_level === 'medium' ? '#fef3c7' : '#fee2e2',
-                      color: result.security_analysis.risk_level === 'low' ? '#166534' : 
-                             result.security_analysis.risk_level === 'medium' ? '#92400e' : '#991b1b',
-                      fontWeight: 'bold',
-                      marginBottom: '1rem'
-                    }}>
-                      {result.security_analysis.risk_level === 'low' ? '🟢' : 
-                       result.security_analysis.risk_level === 'medium' ? '🟡' : '🔴'} 
-                      Risk Level: {result.security_analysis.risk_level.toUpperCase()}
-                    </div>
-
-                    <MetricsRow>
-                      <MetricCard>
-                        <MetricValue>{result.security_analysis.https ? '✅' : '❌'}</MetricValue>
-                        <MetricLabel>HTTPS</MetricLabel>
-                      </MetricCard>
-                      <MetricCard>
-                        <MetricValue>{result.security_analysis.cookies_secure ? '✅' : '❌'}</MetricValue>
-                        <MetricLabel>Secure Cookies</MetricLabel>
-                      </MetricCard>
-                      <MetricCard>
-                        <MetricValue>{result.security_analysis.mixed_content ? '❌' : '✅'}</MetricValue>
-                        <MetricLabel>No Mixed Content</MetricLabel>
-                      </MetricCard>
-                      <MetricCard>
-                        <MetricValue>{result.security_analysis.insecure_forms ? '❌' : '✅'}</MetricValue>
-                        <MetricLabel>Secure Forms</MetricLabel>
-                      </MetricCard>
-                    </MetricsRow>
-
-                    {result.security_analysis.security_headers && Object.keys(result.security_analysis.security_headers).length > 0 && (
-                      <div style={{ marginBottom: '1.5rem' }}>
-                        <h4 style={{ margin: '0 0 0.75rem 0', color: '#1e1e1e' }}>Security Headers</h4>
-                        <ListContainer>
-                          {Object.entries(result.security_analysis.security_headers).map(([header, value]) => (
-                            <ListItem key={header} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                              <strong style={{ color: '#1e1e1e' }}>{header}</strong>
-                              <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>{value}</span>
-                            </ListItem>
-                          ))}
-                        </ListContainer>
-                      </div>
-                    )}
-
-                    {result.security_analysis.third_party_requests && result.security_analysis.third_party_requests.length > 0 && (
-                      <div style={{ marginBottom: '1.5rem' }}>
-                        <h4 style={{ margin: '0 0 0.75rem 0', color: '#1e1e1e' }}>Third-Party Requests ({result.security_analysis.third_party_requests.length})</h4>
-                        <ListContainer>
-                          {result.security_analysis.third_party_requests.map((domain, index) => (
-                            <ListItem key={index}>
-                              <span style={{ color: '#f59e0b' }}>⚠️</span> {domain}
-                            </ListItem>
-                          ))}
-                        </ListContainer>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-              {result.security_analysis?.recommendations && result.security_analysis.recommendations.length > 0 && (
-                <div>
-                  <h4 style={{ margin: '0 0 0.75rem 0', color: '#1e1e1e' }}>Security Recommendations</h4>
-                  <ListContainer>
-                    {result.security_analysis.recommendations.map((rec, index) => (
-                      <ListItem key={index} style={{ color: '#dc2626' }}>
-                        <span style={{ color: '#dc2626' }}>🔧</span> {rec}
-                      </ListItem>
-                    ))}
-                  </ListContainer>
-                </div>
-              )}
-            </Section>
-          )}
-
-          {activeTab === 'performance' && result.performance_metrics && (
-            <Section>
-              <SectionTitle>Performance Metrics</SectionTitle>
-              <MetricsRow>
-                <MetricCard>
-                  <MetricValue>{result.performance_metrics.total_load_time_ms}ms</MetricValue>
-                  <MetricLabel>Total Load Time</MetricLabel>
-                </MetricCard>
-                <MetricCard>
-                  <MetricValue>{result.performance_metrics.dom_ready_time_ms}ms</MetricValue>
-                  <MetricLabel>DOM Ready</MetricLabel>
-                </MetricCard>
-                <MetricCard>
-                  <MetricValue>{result.performance_metrics.first_paint_ms}ms</MetricValue>
-                  <MetricLabel>First Paint</MetricLabel>
-                </MetricCard>
-                <MetricCard>
-                  <MetricValue>{result.performance_metrics.largest_contentful_paint_ms}ms</MetricValue>
-                  <MetricLabel>LCP</MetricLabel>
-                </MetricCard>
-              </MetricsRow>
-              <MetricsRow>
-                <MetricCard>
-                  <MetricValue>{result.performance_metrics.cumulative_layout_shift.toFixed(3)}</MetricValue>
-                  <MetricLabel>CLS Score</MetricLabel>
-                </MetricCard>
-                <MetricCard>
-                  <MetricValue>{result.performance_metrics.total_requests}</MetricValue>
-                  <MetricLabel>Total Requests</MetricLabel>
-                </MetricCard>
-                <MetricCard>
-                  <MetricValue>{result.performance_metrics.total_size_kb.toFixed(1)}KB</MetricValue>
-                  <MetricLabel>Total Size</MetricLabel>
-                </MetricCard>
-                <MetricCard>
-                  <MetricValue>
-                    {result.performance_metrics.first_paint_ms < 1000 ? '🟢' : 
-                     result.performance_metrics.first_paint_ms < 2500 ? '🟡' : '🔴'}
-                  </MetricValue>
-                  <MetricLabel>Performance</MetricLabel>
-                </MetricCard>
-              </MetricsRow>
-              
-              <div style={{ marginTop: '1.5rem' }}>
-                <h4 style={{ margin: '0 0 0.75rem 0', color: '#1e1e1e' }}>Performance Insights</h4>
-                <ListContainer>
-                  <ListItem>
-                    <strong>Load Time Assessment:</strong> {
-                      result.performance_metrics.total_load_time_ms < 2000 ? 'Excellent - Very fast loading' :
-                      result.performance_metrics.total_load_time_ms < 4000 ? 'Good - Acceptable loading speed' :
-                      result.performance_metrics.total_load_time_ms < 8000 ? 'Average - Could be improved' :
-                      'Poor - Significant optimization needed'
-                    }
-                  </ListItem>
-                  <ListItem>
-                    <strong>CLS Assessment:</strong> {
-                      result.performance_metrics.cumulative_layout_shift < 0.1 ? 'Excellent - Minimal layout shifts' :
-                      result.performance_metrics.cumulative_layout_shift < 0.25 ? 'Good - Some layout shifts' :
-                      'Poor - Significant layout instability'
-                    }
-                  </ListItem>
-                  <ListItem>
-                    <strong>Request Efficiency:</strong> {
-                      result.performance_metrics.total_requests < 50 ? 'Excellent - Minimal requests' :
-                      result.performance_metrics.total_requests < 100 ? 'Good - Reasonable request count' :
-                      'Poor - Too many requests, consider optimization'
-                    }
-                  </ListItem>
-                </ListContainer>
-              </div>
-            </Section>
-          )}
-
-          {activeTab === 'console' && result.console_logs && (
-            <Section>
-              <SectionTitle>Console Messages</SectionTitle>
-              {result.console_logs.length > 0 ? (
-                <div>
-                  <div style={{ marginBottom: '1rem', color: '#6b7280', fontSize: '0.9rem' }}>
-                    Captured {result.console_logs.length} console message(s) during page load
-                  </div>
-                  <ListContainer>
-                    {result.console_logs.map((log, index) => {
-                      const logMessage = typeof log === 'string' ? log : log.message;
-                      const logLevel = typeof log === 'object' && log.level ? log.level : 'log';
-                      
-                      return (
-                        <ListItem key={index} style={{ 
-                          fontFamily: 'Monaco, Consolas, "Courier New", monospace',
-                          backgroundColor: '#f8fafc',
-                          borderLeft: `3px solid ${
-                            logLevel === 'error' || logMessage.toLowerCase().includes('error') ? '#ef4444' : 
-                            logLevel === 'warning' || logLevel === 'warn' || logMessage.toLowerCase().includes('warn') ? '#f59e0b' : 
-                            '#10b981'
-                          }`
-                        }}>
-                          <span style={{ 
-                            fontWeight: 'bold', 
-                            marginRight: '0.5rem',
-                            color: logLevel === 'error' ? '#ef4444' : 
-                                   logLevel === 'warning' || logLevel === 'warn' ? '#f59e0b' : 
-                                   '#10b981'
-                          }}>
-                            [{logLevel.toUpperCase()}]
-                          </span>
-                          {logMessage}
-                        </ListItem>
-                      );
-                    })}
-                  </ListContainer>
-                </div>
-              ) : (
-                <Description>No console messages captured</Description>
-              )}
-              
-              {result.cookies && Object.keys(result.cookies).length > 0 && (
-                <div style={{ marginTop: '2rem' }}>
-                  <h4 style={{ margin: '0 0 0.75rem 0', color: '#1e1e1e' }}>Cookies ({Object.keys(result.cookies).length})</h4>
-                  <ListContainer>
-                    {Object.entries(result.cookies).map(([name, value]) => (
-                      <ListItem key={name} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <strong style={{ color: '#1e1e1e' }}>{name}</strong>
-                        <span style={{ color: '#6b7280', fontSize: '0.9rem', wordBreak: 'break-all' }}>{value}</span>
-                      </ListItem>
-                    ))}
-                  </ListContainer>
-                </div>
-              )}
-
-              {result.response_headers && Object.keys(result.response_headers).length > 0 && (
-                <div style={{ marginTop: '2rem' }}>
-                  <h4 style={{ margin: '0 0 0.75rem 0', color: '#1e1e1e' }}>Response Headers</h4>
-                  <ListContainer>
-                    {Object.entries(result.response_headers).map(([header, value]) => (
-                      <ListItem key={header} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <strong style={{ color: '#1e1e1e' }}>{header}</strong>
-                        <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>{value}</span>
-                      </ListItem>
-                    ))}
-                  </ListContainer>
-                </div>
-              )}
-            </Section>
-          )}
-        </ResultsContainer>
+                  </AccordionTitle>
+                  <AccordionChevron $expanded={expandedAccordions.has(tab.id)}>
+                    <FiChevronDown />
+                  </AccordionChevron>
+                </AccordionHeader>
+                <AccordionContent $expanded={expandedAccordions.has(tab.id)}>
+                  {expandedAccordions.has(tab.id) && renderTabContent(tab.id)}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </AccordionContainer>
+        </ResultsCard>
       )}
-    </ScraperContainer>
+    </Container>
   );
 };
 

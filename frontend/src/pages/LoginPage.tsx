@@ -151,14 +151,29 @@ const RightPanel = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 2rem;
+  padding: 1.25rem;
   background: ${colors.surface};
+  min-height: 100vh;
+  
+  @media (min-width: 769px) {
+    padding: 2rem;
+  }
+  
+  @media (max-width: 968px) {
+    min-height: 100vh;
+    justify-content: flex-start;
+    padding-top: 2rem;
+  }
 `;
 
 const FormContainer = styled.div`
   width: 100%;
   max-width: 420px;
   animation: ${fadeInUp} 0.5s ease-out;
+  
+  @media (max-width: 968px) {
+    max-width: 100%;
+  }
 `;
 
 const BackLink = styled(Link)`
@@ -169,11 +184,21 @@ const BackLink = styled(Link)`
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 500;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   transition: color 0.2s ease;
 
   &:hover {
     color: ${colors.primary};
+  }
+`;
+
+const MobileLogoWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  
+  @media (min-width: 969px) {
+    display: none;
   }
 `;
 
@@ -182,10 +207,14 @@ const FormHeader = styled.div`
 `;
 
 const FormTitle = styled.h2`
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: ${colors.textPrimary};
   margin-bottom: 0.5rem;
+  
+  @media (min-width: 769px) {
+    font-size: 1.75rem;
+  }
 `;
 
 const FormSubtitle = styled.p`
@@ -195,8 +224,14 @@ const FormSubtitle = styled.p`
 
 const OAuthSection = styled.div`
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
   margin-bottom: 1.5rem;
+  
+  @media (min-width: 480px) {
+    flex-direction: row;
+    gap: 1rem;
+  }
 `;
 
 const OAuthButton = styled.button<{ provider: 'google' | 'github' }>`
@@ -425,6 +460,10 @@ const LoginPage: React.FC = () => {
 
       <RightPanel>
         <FormContainer>
+          <MobileLogoWrapper>
+            <Logo size={60} />
+          </MobileLogoWrapper>
+          
           <BackLink to="/">
             ← Back to home
           </BackLink>

@@ -1,8 +1,9 @@
-import React from 'react';
-import styled, { keyframes } from 'styled-components';
+import React, { useState } from 'react';
+import styled, { keyframes, css } from 'styled-components';
 import { Link } from 'react-router-dom';
 import colors from '../theme/colors';
 import Logo from '../components/Logo';
+import { FiMenu, FiX } from 'react-icons/fi';
 
 // Modern Animations
 const fadeInUp = keyframes`
@@ -92,8 +93,8 @@ const Header = styled.header`
   left: 0;
   right: 0;
   z-index: 100;
-  height: 80px;
-  padding: 0 2rem;
+  height: 70px;
+  padding: 0 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -102,9 +103,83 @@ const Header = styled.header`
   border-bottom: 1px solid ${colors.secondaryLight}50;
   transition: all 0.3s ease;
 
-  @media (max-width: 768px) {
+  @media (min-width: 769px) {
+    height: 80px;
+    padding: 0 2rem;
+  }
+
+  @media (max-width: 480px) {
     padding: 0 1rem;
-    height: 70px;
+  }
+`;
+
+const MobileMenuButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: ${colors.secondaryLight};
+  border: none;
+  border-radius: 10px;
+  color: ${colors.textLight};
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${colors.primary};
+  }
+  
+  @media (min-width: 969px) {
+    display: none;
+  }
+`;
+
+const MobileMenu = styled.div<{ isOpen: boolean }>`
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: ${colors.secondary};
+  z-index: 99;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  transform: translateY(${props => props.isOpen ? '0' : '-100%'});
+  opacity: ${props => props.isOpen ? 1 : 0};
+  visibility: ${props => props.isOpen ? 'visible' : 'hidden'};
+  transition: all 0.3s ease;
+  
+  @media (min-width: 969px) {
+    display: none;
+  }
+`;
+
+const MobileNavLink = styled.a`
+  color: ${colors.textLight};
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.125rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid ${colors.secondaryLight};
+  transition: color 0.2s ease;
+  
+  &:hover {
+    color: ${colors.primaryLight};
+  }
+`;
+
+const MobileAuthButtons = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  
+  a {
+    text-align: center;
+    padding: 1rem;
   }
 `;
 
@@ -160,9 +235,13 @@ const NavLink = styled.a`
 `;
 
 const AuthButtons = styled.div`
-  display: flex;
+  display: none;
   gap: 1rem;
   align-items: center;
+  
+  @media (min-width: 969px) {
+    display: flex;
+  }
 `;
 
 const LoginBtn = styled(Link)`
@@ -203,11 +282,15 @@ const HeroContent = styled.div`
   justify-content: center;
   align-items: center;
   text-align: center;
-  padding: 8rem 2rem 4rem;
+  padding: 6rem 1rem 3rem;
   max-width: 1200px;
   margin: 0 auto;
   position: relative;
   z-index: 10;
+  
+  @media (min-width: 769px) {
+    padding: 8rem 2rem 4rem;
+  }
 `;
 
 const HeroBadge = styled.div`
@@ -260,6 +343,17 @@ const CTAGroup = styled.div`
   flex-wrap: wrap;
   justify-content: center;
   animation: ${fadeInUp} 0.6s ease-out 0.3s both;
+  width: 100%;
+  padding: 0 1rem;
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    
+    a {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 `;
 
 const PrimaryBtn = styled(Link)`
@@ -383,9 +477,13 @@ const PreviewCard = styled.div`
 
 // Features Section
 const FeaturesSection = styled.section`
-  padding: 8rem 2rem;
+  padding: 4rem 1rem;
   background: ${colors.background};
   position: relative;
+  
+  @media (min-width: 769px) {
+    padding: 8rem 2rem;
+  }
 `;
 
 const SectionContainer = styled.div`
@@ -426,22 +524,33 @@ const SectionSubtitle = styled.p`
 
 const FeatureGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 2rem;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
 
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+  
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
   }
 `;
 
 const FeatureCard = styled.div`
   background: ${colors.surface};
-  border-radius: 16px;
-  padding: 2rem;
+  border-radius: 14px;
+  padding: 1.5rem;
   border: 1px solid ${colors.border};
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  
+  @media (min-width: 769px) {
+    padding: 2rem;
+    border-radius: 16px;
+  }
 
   &::before {
     content: '';
@@ -494,10 +603,14 @@ const FeatureDescription = styled.p`
 
 // Stats Section
 const StatsSection = styled.section`
-  padding: 6rem 2rem;
+  padding: 3rem 1rem;
   background: ${colors.gradientDark};
   position: relative;
   overflow: hidden;
+  
+  @media (min-width: 769px) {
+    padding: 6rem 2rem;
+  }
 
   &::before {
     content: '';
@@ -514,12 +627,17 @@ const StatsSection = styled.section`
 
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 3rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
   max-width: 1000px;
   margin: 0 auto;
   position: relative;
   z-index: 10;
+  
+  @media (min-width: 769px) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3rem;
+  }
 `;
 
 const StatItem = styled.div`
@@ -527,14 +645,19 @@ const StatItem = styled.div`
 `;
 
 const StatValue = styled.div`
-  font-size: 3.5rem;
+  font-size: 2rem;
   font-weight: 800;
   color: ${colors.textLight};
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   background: ${colors.gradientGlow};
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  
+  @media (min-width: 769px) {
+    font-size: 3.5rem;
+    margin-bottom: 0.5rem;
+  }
 `;
 
 const StatLabel = styled.div`
@@ -545,29 +668,37 @@ const StatLabel = styled.div`
 
 // Tech Stack Section
 const TechSection = styled.section`
-  padding: 6rem 2rem;
+  padding: 3rem 1rem;
   background: ${colors.backgroundSecondary};
+  
+  @media (min-width: 769px) {
+    padding: 6rem 2rem;
+  }
 `;
 
 const TechGrid = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 2rem;
-  margin-top: 3rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-top: 2rem;
+  
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
 `;
 
 const TechCard = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1.5rem 2rem;
+  gap: 0.5rem;
+  padding: 1rem;
   background: ${colors.surface};
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid ${colors.border};
   transition: all 0.3s ease;
-  min-width: 140px;
 
   &:hover {
     transform: translateY(-3px);
@@ -576,32 +707,55 @@ const TechCard = styled.div`
   }
 
   span {
-    font-size: 2rem;
+    font-size: 1.5rem;
   }
 
   p {
     font-weight: 600;
     color: ${colors.textPrimary};
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     margin: 0;
+  }
+  
+  @media (min-width: 640px) {
+    padding: 1.5rem 2rem;
+    gap: 0.75rem;
+    border-radius: 12px;
+    
+    span {
+      font-size: 2rem;
+    }
+    
+    p {
+      font-size: 0.9rem;
+    }
   }
 `;
 
 // CTA Section
 const CTASection = styled.section`
-  padding: 8rem 2rem;
+  padding: 3rem 1rem;
   background: ${colors.background};
   text-align: center;
+  
+  @media (min-width: 769px) {
+    padding: 8rem 2rem;
+  }
 `;
 
 const CTACard = styled.div`
   max-width: 800px;
   margin: 0 auto;
   background: ${colors.gradientDark};
-  border-radius: 24px;
-  padding: 4rem;
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
   position: relative;
   overflow: hidden;
+  
+  @media (min-width: 769px) {
+    border-radius: 24px;
+    padding: 4rem;
+  }
 
   &::before {
     content: '';
@@ -636,8 +790,12 @@ const CTADescription = styled.p`
 // Footer
 const Footer = styled.footer`
   background: ${colors.secondaryDark};
-  padding: 4rem 2rem 2rem;
+  padding: 2.5rem 1rem 1.5rem;
   border-top: 1px solid ${colors.secondaryLight};
+  
+  @media (min-width: 769px) {
+    padding: 4rem 2rem 2rem;
+  }
 `;
 
 const FooterContent = styled.div`
@@ -736,6 +894,10 @@ const ArrowIcon = () => (
 
 // Component
 const LandingPage: React.FC = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+  
   return (
     <LandingContainer>
       <HeroSection>
@@ -746,7 +908,7 @@ const LandingPage: React.FC = () => {
 
         <Header>
           <LogoLink to="/">
-            <Logo size={140} />
+            <Logo size={100} />
           </LogoLink>
           <Nav>
             <NavLink href="#features">Features</NavLink>
@@ -758,7 +920,21 @@ const LandingPage: React.FC = () => {
             <LoginBtn to="/login">Sign In</LoginBtn>
             <SignupBtn to="/register">Get Started</SignupBtn>
           </AuthButtons>
+          <MobileMenuButton onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <FiX /> : <FiMenu />}
+          </MobileMenuButton>
         </Header>
+        
+        <MobileMenu isOpen={mobileMenuOpen}>
+          <MobileNavLink href="#features" onClick={closeMobileMenu}>Features</MobileNavLink>
+          <MobileNavLink href="#technology" onClick={closeMobileMenu}>Technology</MobileNavLink>
+          <MobileNavLink href="#pricing" onClick={closeMobileMenu}>Pricing</MobileNavLink>
+          <MobileNavLink href="/api-docs" onClick={closeMobileMenu}>API Docs</MobileNavLink>
+          <MobileAuthButtons>
+            <LoginBtn to="/login" onClick={closeMobileMenu}>Sign In</LoginBtn>
+            <SignupBtn to="/register" onClick={closeMobileMenu}>Get Started</SignupBtn>
+          </MobileAuthButtons>
+        </MobileMenu>
 
         <HeroContent>
           <HeroBadge>New: Advanced Security Analysis Available</HeroBadge>
